@@ -24,3 +24,6 @@
 
 ### Interesting Tools:
 - https://github.com/twintproject/twint
+
+### Google Docs:
+- https://docs.google.com/document/d/1gfvLkT3j-7GNFuwSzb1rLRq5NNAaPcGRwPfgnSKnpOc/edit?usp=sharing
