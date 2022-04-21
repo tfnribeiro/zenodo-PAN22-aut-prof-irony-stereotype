@@ -1,6 +1,22 @@
 # zenodo-PAN22-aut-prof-irony-stereotype
  PAN 22 Author Profiling: Profiling Irony and Stereotype Spreaders on Twitter (IROSTEREO)
 
+## Features Used:
+- Pos/Neg Polarity Counts (Threshold Defined beforehand) ✅
+- Vocab Size - Tiago ✅
+- Type/Token Ration (N_Vocabs/N_Words) - Tiago ✅
+- Avg. Word Length - Tiago ✅
+- Avg. Tweet Length - Tiago ✅
+- Avg. Emoji Count - Tiago ✅
+- Repeated Punctuations Count "..." "?!" "!" "?" - Kaja
+- Number of Typos - Kaja
+- Avg. Profanity per tweet - Yana
+- Avg. Proportion of Capital Letters - Tiago
+- Avg. Tweet LiX complexity - Tiago 
+- Syntactic Complexity - Yana
+    - Vector with multiple measures.
+- Counts of POS tags (Avg. Tweet) - Tiago
+
 ## Possible Features:
 - Polarity Score - Emotions/Semantics
 - Counts of Emojis 
