@@ -43,12 +43,3 @@ def pos_counts(author_tweet_list):
         for word, tag in pos_tag(tokenize_tweet(tweet, True), tagset='universal'):
             pos_dict[tag] += 1
     return np.array(list(pos_dict.values()))
-
-list_features = []
-for i in range(len(X)):
-    tweet_list = X[i]
-    get_features = pos_counts(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
-
-pos_features = np.array(list_features)

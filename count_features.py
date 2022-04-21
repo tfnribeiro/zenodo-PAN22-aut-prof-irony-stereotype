@@ -40,11 +40,3 @@ def author_style_counts(author_tweet_list):
     
     return np.array([auth_vocabsize, type_token_rt, author_word_length_avg, avg_tweet_length, author_hashtag_count, author_usertag_count, author_total_emoji, author_avg_emoji])
 
-list_features = []
-for i in range(len(X)):
-    tweet_list = X[i]
-    get_features = author_style_counts(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
-
-count_featues = np.array(list_features)
