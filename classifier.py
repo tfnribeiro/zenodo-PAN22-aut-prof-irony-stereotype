@@ -5,7 +5,8 @@ from sklearn.model_selection import KFold
 from pos_counts import *
 from count_features import *
 
-X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.25)
+# Split the Train data into a 20% Test dataset
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.2)
 
 list_features = []
 for i in range(len(X_train_all)):
@@ -47,11 +48,13 @@ count_featues = np.array(list_features)
 
 X_test_features = np.hstack((count_featues,pos_features))
 
-kf = KFold(n_splits=6)
-
 random_forest_list = []
 one_nn_list = []
 three_nn_list = []
+five_nn_list = []
+
+# KFold validation to pick the best classifier
+kf = KFold(n_splits=3)
 
 for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     X_train, X_test = X_train_features[train_index,:], X_train_features[test_index,:]
@@ -76,6 +79,17 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     random_forest_list.append((acc_train,acc_test))
     print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
     print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
+
+    clf = KNeighborsClassifier(n_neighbors=5)
+    clf.fit(X_train, y_train)
+    y_train_pred = clf.predict(X_train)
+    y_test_pred = clf.predict(X_test)
+
+    acc_train = np.sum(y_train_pred == y_train) / len(y_train)
+    acc_test = np.sum(y_test_pred == y_test) / len(y_test)
+    five_nn_list.append((acc_train,acc_test))
+    print(f"5-NN acc (Train): {acc_train:.4f}")
+    print(f"5-NN (Test): {acc_test:.4f}")
 
     clf = KNeighborsClassifier(n_neighbors=3)
     clf.fit(X_train, y_train)
@@ -102,6 +116,12 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
 random_forest_list = np.array(random_forest_list)
 one_nn_list = np.array(one_nn_list)
 three_nn_list = np.array(three_nn_list)
+five_nn_list = np.array(five_nn_list)
+
+print(random_forest_list)
+print(one_nn_list)
+print(three_nn_list)
+print(five_nn_list)
 
 clf = RandomForestClassifier()
 clf.fit(X_train, y_train)
@@ -112,3 +132,5 @@ acc_test = np.sum(y_test_pred == y_test_all) / len(y_test_all)
 
 print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
 print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
+
+# Acc: 82% - 90% Depending on the split
