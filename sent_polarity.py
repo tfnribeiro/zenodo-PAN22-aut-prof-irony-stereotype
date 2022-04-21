@@ -21,7 +21,7 @@ def get_sent_polarity(user_tweet_list, ironic_setence_t, polarity_t):
 best_acc = -1
 best_parameters = (-1,-1)
 sentence_n_list = np.arange(10,91,10)
-polarity_threshold_list = np.arange(0.1, 0.4, 0.05)
+polarity_threshold_list = np.arange(0.05, 0.4, 0.01)
 for sentence_n in sentence_n_list:
     for polarity_t in polarity_threshold_list:
         correct = 0
