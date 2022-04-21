@@ -14,6 +14,7 @@ DATA_HOME = path.join("data", "en")
 filename = "6efbf0c5385bde90583d02f14750f7d9.xml"
 filename = path.join(DATA_HOME, filename)
 
+
 #Set the language
 LANG  = "en/"
 
@@ -42,13 +43,13 @@ X = []
 y = []
 
 print(DATA_HOME)
-for FILE in glob.glob(DATA_HOME+"\*.xml"):
+for FILE in glob.glob(DATA_HOME+"/*.xml"):
     #The split command below gets just the file name,
     #without the whole address. The last slicing part [:-4]
     #removes .xml from the name, so that to get the user code
-    USERCODE = FILE.split("\\")[-1][:-4]
+    USERCODE = FILE.split("/")[-1][:-4]
 
-    print(FILE)
+    #print(FILE)
     #This function should return a vectorial representation of a user
     repr = get_representation_tweets(FILE)
 
