@@ -2,6 +2,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+
 from pos_counts import *
 from count_features import *
 
@@ -132,5 +136,24 @@ acc_test = np.sum(y_test_pred == y_test_all) / len(y_test_all)
 
 print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
 print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
-
 # Acc: 82% - 90% Depending on the split
+
+pipe = make_pipeline(StandardScaler(), LogisticRegression())
+pipe.fit(X_train, y_train)
+print("Log. Reg:", pipe.score(X_test, y_test))
+print(pipe.get_params()['logisticregression'].coef_)
+
+
+"""
+
+Weights from Log Regression gives us the "predictive power":
+[[ 0.8165839   0.15800493 -0.10996453  1.15362878 -0.71378012 -0.69999862
+  -0.00029913 -0.00029913  0.23670419 -0.25793926  0.24235472  0.64781405
+  -1.39277626  1.50101159  0.45641181  0.04703658  0.93722263 -0.78494383
+  -0.93381287 -0.61578778]]
+[auth_vocabsize, type_token_rt, author_word_length_avg, avg_tweet_length, author_hashtag_count, author_usertag_count, 
+author_total_emoji, author_avg_emoji, ADJ, ADP , ADV , CONJ,
+DET, NOUN, NUM, PRT, PRON, VERB,
+PUNCT, UNK]
+
+"""
