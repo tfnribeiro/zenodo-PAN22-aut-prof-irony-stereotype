@@ -41,14 +41,11 @@ f.close()
 X = []
 y = []
 
-print(DATA_HOME)
 for FILE in glob.glob(DATA_HOME+"\*.xml"):
     #The split command below gets just the file name,
     #without the whole address. The last slicing part [:-4]
     #removes .xml from the name, so that to get the user code
     USERCODE = FILE.split("\\")[-1][:-4]
-
-    print(FILE)
     #This function should return a vectorial representation of a user
     repr = get_representation_tweets(FILE)
 
@@ -62,4 +59,6 @@ for FILE in glob.glob(DATA_HOME+"\*.xml"):
 
 X = np.array(X)
 y = np.array(y)
+
+print("Load XML files complete, number of tweet profiles: ", len(X))
 
