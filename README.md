@@ -4,7 +4,6 @@
 ## Possible Features:
 - Polarity Score - Emotions/Semantics
 - Counts of Emojis 
-- Set-up Sentences
 - Language Complexity (LiX)
 - Typos (Minimum Edit Distance)
 - n-grams
