@@ -13,61 +13,33 @@ from read_files import *
 # Split the Train data into a 20% Test dataset
 X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.2)
 
-list_features = []
-for i in range(len(X_train_all)):
-    tweet_list = X_train_all[i]
-    get_features = pos_counts(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
+def get_features(dataset, function, label=""):
+    list_features = []
+    reported_values = set()
+    for i in range(len(dataset)):
+        tweet_list = dataset[i]
+        get_features = function(tweet_list)
+        per_cent_complete = round(i/len(dataset),1)
+        if per_cent_complete % 0.2 == 0 and per_cent_complete not in reported_values:
+            reported_values.add(per_cent_complete)
+            print(f"{label} Processing {per_cent_complete*100}% complete for features: {function.__name__}")
+        list_features.append(get_features)
+    print(f"{label} Processing for features: {function.__name__}, is complete!")
+    return np.array(list_features)
 
-pos_features = np.array(list_features)
+pos_features = get_features(X_train_all, pos_counts, "Train")
 
-list_features = []
-for i in range(len(X_train_all)):
-    tweet_list = X_train_all[i]
-    get_features = author_style_counts(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
+count_features = get_features(X_train_all, author_style_counts, "Train")
 
-count_features = np.array(list_features)
-
-list_features = []
-for i in range(len(X_train_all)):
-    tweet_list = X_train_all[i]
-    get_features = lix_score(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
-
-lix_features = np.array(list_features)
+lix_features = get_features(X_train_all, lix_score, "Train")
 
 X_train_features = np.concatenate((count_features,pos_features,lix_features), axis=1)
 
-list_features = []
-for i in range(len(X_test_all)):
-    tweet_list = X_test_all[i]
-    get_features = pos_counts(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
+pos_features = get_features(X_test_all, pos_counts, "Test")
 
-pos_features = np.array(list_features)
+count_features = get_features(X_test_all, author_style_counts, "Test")
 
-list_features = []
-for i in range(len(X_test_all)):
-    tweet_list = X_test_all[i]
-    get_features = author_style_counts(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
-
-count_features = np.array(list_features)
-
-list_features = []
-for i in range(len(X_test_all)):
-    tweet_list = X_test_all[i]
-    get_features = lix_score(tweet_list)
-    print(y[i], get_features)
-    list_features.append(get_features)
-
-lix_features = np.array(list_features)
+lix_features = get_features(X_test_all, lix_score, "Test")
 
 X_test_features = np.concatenate((count_features,pos_features,lix_features), axis=1)
 
@@ -147,7 +119,7 @@ print(three_nn_list)
 print(five_nn_list)
 
 clf = RandomForestClassifier()
-clf.fit(X_train, y_train)
+clf.fit(X_train_features, y_train_all)
 y_train_pred = clf.predict(X_train_features)
 y_test_pred = clf.predict(X_test_features)
 acc_train = np.sum(y_train_pred == y_train_all) / len(y_train_all)
@@ -158,22 +130,26 @@ print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
 # Acc: 82% - 90% Depending on the split
 
 pipe = make_pipeline(StandardScaler(), LogisticRegression())
-pipe.fit(X_train, y_train)
-print("Log. Reg:", pipe.score(X_test, y_test))
+pipe.fit(X_train_features, y_train_all)
+print("Log. Reg:", pipe.score(X_test_features, y_test_all))
 print(pipe.get_params()['logisticregression'].coef_)
 
+print("Train NI Averages: ")
+print(X_train_features[y_train_all=="NI",:].mean(axis=0))
+print("Train I Averages: ")
+print(X_train_features[y_train_all=="I",:].mean(axis=0))
 
 """
 
 Weights from Log Regression gives us the "predictive power":
-[[ 0.95045292 -0.03405038 -0.07335327  1.18598367 -0.72545017 -0.44027836
-   0.07322202  0.11004746  0.11004746  0.30565737  0.57943472 -0.32226297
-  -0.44826632 -0.15694412 -0.91155072  0.54756521  0.5277804   0.06918495
-   1.23653202 -0.48857595 -0.72558147 -0.38446393  1.22738007]]
+[[ 0.83384098  0.43150988 -0.31436612  1.12271948 -0.71178175 -0.61877302
+  -0.17990646 -0.13489198 -0.13489198  0.3576268   0.48496003 -0.10197374
+  -0.24532996  0.12368179 -1.235854    0.29782858  0.45247568 -0.27540978
+   1.25189261 -0.46820761 -0.65596446 -0.33554537  1.21193532]]
 
 [auth_vocabsize, type_token_rt, author_word_length_avg, avg_tweet_length, author_hashtag_count, author_usertag_count, 
- author_urltag_count, author_total_emoji, author_avg_emoji, avg_capital_lower_ratio, ADJ, ADP , 
- ADV , CONJ, DET, NOUN, NUM, PRT, 
- PRON, VERB, PUNCT, UNK, LiXScore]
+ author_urltag_count, author_avg_emoji, avg_capital_lower_ratio, ADJ, ADP, ADV , 
+ CONJ, DET, NOUN, NUM, PRT, PRON, 
+ VERB, PUNCT, UNK, LiXScore]
 
 """

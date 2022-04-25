@@ -8,7 +8,7 @@ Calculates a number of different counts per tweet and generates the following fe
 
 [auth_vocabsize, type_token_rt, author_word_length_avg,
   avg_tweet_length, author_hashtag_count,
-  author_usertag_count, author_urltag_count, author_total_emoji,
+  author_usertag_count, author_urltag_count, 
   author_avg_emoji, avg_capital_lower_ratio]
   
 """
@@ -56,5 +56,5 @@ def author_style_counts(author_tweet_list):
     auth_vocabsize = len(author_vocab)
     avg_capital_lower_ratio = author_total_capital_lower_ratio/len(author_tweet_list)
     
-    return np.array([auth_vocabsize, type_token_rt, author_word_length_avg, avg_tweet_length, author_hashtag_count, author_usertag_count, author_urltag_count, author_total_emoji, author_avg_emoji, avg_capital_lower_ratio])
+    return np.array([auth_vocabsize, type_token_rt, author_word_length_avg, avg_tweet_length, author_hashtag_count, author_usertag_count, author_urltag_count, author_avg_emoji, avg_capital_lower_ratio])
 
