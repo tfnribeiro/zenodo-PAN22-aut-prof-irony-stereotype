@@ -1,9 +1,7 @@
-from read_files import *
+import numpy as np
 from utils import *
 from nltk.tag import pos_tag
 
-
-np.set_printoptions(suppress=True)
 """
 https://www.nltk.org/book/ch05.html
 

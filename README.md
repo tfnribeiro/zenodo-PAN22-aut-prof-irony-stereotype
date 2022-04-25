@@ -11,11 +11,11 @@
 - Repeated Punctuations Count "..." "?!" "!" "?" - Kaja
 - Number of Typos - Kaja
 - Avg. Profanity per tweet - Yana
-- Avg. Proportion of Capital Letters - Tiago
-- Avg. Tweet LiX complexity - Tiago 
+- Avg. Proportion of Capital Letters - Tiago ✅
+- Avg. Tweet LiX complexity - Tiago ✅
 - Syntactic Complexity - Yana
     - Vector with multiple measures.
-- Counts of POS tags (Avg. Tweet) - Tiago
+- Counts of POS tags (Avg. Tweet) - Tiago ✅
 
 ## Possible Features:
 - Polarity Score - Emotions/Semantics
