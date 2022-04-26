@@ -20,10 +20,10 @@ def get_features(dataset, function, label=""):
     for i in range(len(dataset)):
         tweet_list = dataset[i]
         get_features = function(tweet_list)
-        per_cent_complete = round(i/len(dataset),1)
-        if per_cent_complete % 0.2 == 0 and per_cent_complete not in reported_values:
+        per_cent_complete = round(i/len(dataset),1)*100
+        if  per_cent_complete % 20 == 0 and per_cent_complete not in reported_values:
             reported_values.add(per_cent_complete)
-            print(f"{label} Processing {per_cent_complete*100}% complete for features: {function.__name__}")
+            print(f"{label} Processing {per_cent_complete}% complete for features: {function.__name__}")
         list_features.append(get_features)
     print(f"{label} Processing for features: {function.__name__}, is complete!")
     return np.array(list_features)
@@ -38,11 +38,9 @@ emoji_features = get_features(X_train_all, emoji_embeds, "Train")
 
 emoji_pca = PCA(n_components=20)
 emoji_pca.fit(emoji_features)
-print("Emoji Explained VAR:", emoji_pca.explained_variance_ratio_, "Total VAR:", emoji_pca.explained_variance_ratio_.sum())
+print("Emoji PCA Explained VAR:", emoji_pca.explained_variance_ratio_, "Total VAR:", emoji_pca.explained_variance_ratio_.sum())
 
-print(emoji_features.shape)
-
-X_train_features = np.concatenate((count_features,pos_features,lix_features,emoji_pca.transform(emoji_features)), axis=1)
+X_train_features = np.concatenate((count_features,pos_features,lix_features, emoji_pca.transform(emoji_features)), axis=1)
 
 pos_features = get_features(X_test_all, pos_counts, "Test")
 
