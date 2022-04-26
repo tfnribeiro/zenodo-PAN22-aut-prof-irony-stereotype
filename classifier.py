@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from pos_counts import *
 from count_features import *
@@ -11,7 +12,7 @@ from lexical_comp import *
 from read_files import *
 
 # Split the Train data into a 20% Test dataset
-X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.2)
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.20)
 
 def get_features(dataset, function, label=""):
     list_features = []
@@ -33,7 +34,15 @@ count_features = get_features(X_train_all, author_style_counts, "Train")
 
 lix_features = get_features(X_train_all, lix_score, "Train")
 
-X_train_features = np.concatenate((count_features,pos_features,lix_features), axis=1)
+emoji_features = get_features(X_train_all, emoji_embeds, "Train")
+
+emoji_pca = PCA(n_components=20)
+emoji_pca.fit(emoji_features)
+print("Emoji Explained VAR:", emoji_pca.explained_variance_ratio_, "Total VAR:", emoji_pca.explained_variance_ratio_.sum())
+
+print(emoji_features.shape)
+
+X_train_features = np.concatenate((count_features,pos_features,lix_features,emoji_pca.transform(emoji_features)), axis=1)
 
 pos_features = get_features(X_test_all, pos_counts, "Test")
 
@@ -41,7 +50,11 @@ count_features = get_features(X_test_all, author_style_counts, "Test")
 
 lix_features = get_features(X_test_all, lix_score, "Test")
 
-X_test_features = np.concatenate((count_features,pos_features,lix_features), axis=1)
+emoji_features = get_features(X_test_all, emoji_embeds, "Test")
+
+print(emoji_features.shape)
+
+X_test_features = np.concatenate((count_features,pos_features,lix_features, emoji_pca.transform(emoji_features)), axis=1)
 
 random_forest_list = []
 one_nn_list = []

@@ -1,6 +1,7 @@
 import emoji
 import regex
 import numpy as np
+from utils import *
 
 np.set_printoptions(suppress=True)
 """
@@ -58,3 +59,11 @@ def author_style_counts(author_tweet_list):
     
     return np.array([auth_vocabsize, type_token_rt, author_word_length_avg, avg_tweet_length, author_hashtag_count, author_usertag_count, author_urltag_count, author_avg_emoji, avg_capital_lower_ratio])
 
+def emoji_embeds(author_tweet_list):
+    emoji_counts = {k:0 for k in emoji.UNICODE_EMOJI['en'].keys()}
+    for tweet in author_tweet_list:
+        tweet = tokenize_tweet(tweet)
+        for c in tweet:
+            if c in emoji_counts:
+                emoji_counts[c] += 1
+    return np.array(list(emoji_counts.values()))
