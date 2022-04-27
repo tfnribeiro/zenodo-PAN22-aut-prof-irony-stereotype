@@ -9,62 +9,80 @@ from sklearn.pipeline import make_pipeline
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
+from sent_polarity import *
 from read_files import *
+import os 
+np.random.seed(0)
 
-# Split the Train data into a 20% Test dataset
-X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.20)
-
-def get_features(dataset, function, label=""):
+def get_features(dataset, function, label="", report_per_cent=50):
     list_features = []
     reported_values = set()
     for i in range(len(dataset)):
         tweet_list = dataset[i]
         get_features = function(tweet_list)
-        per_cent_complete = round(i/len(dataset),1)*100
-        if  per_cent_complete % 20 == 0 and per_cent_complete not in reported_values:
+        per_cent_complete = round(i/len(dataset),2)*100
+        if  per_cent_complete % report_per_cent == 0 and per_cent_complete not in reported_values:
             reported_values.add(per_cent_complete)
             print(f"{label} Processing {per_cent_complete}% complete for features: {function.__name__}")
         list_features.append(get_features)
     print(f"{label} Processing for features: {function.__name__}, is complete!")
     return np.array(list_features)
 
-pos_features = get_features(X_train_all, pos_counts, "Train")
+# Split the Train data into a 20% Test dataset
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.25)
 
-count_features = get_features(X_train_all, author_style_counts, "Train")
+#Cache the Values for the test set
+if os.path.isfile("pos_features.csv"):
+    pos_features = np.loadtxt("pos_features.csv", delimiter=",")
+else:
+    pos_features = get_features(X, pos_counts, "All Data")
+    np.savetxt("pos_features.csv", pos_features, delimiter=",")
 
-lix_features = get_features(X_train_all, lix_score, "Train")
+if os.path.isfile("author_style_counts.csv"):
+    count_features = np.loadtxt("author_style_counts.csv", delimiter=",")
+else:
+    count_features = get_features(X, author_style_counts, "All Data")
+    np.savetxt("author_style_counts.csv", count_features, delimiter=",")
 
-emoji_features = get_features(X_train_all, emoji_embeds, "Train")
+if os.path.isfile("lix_score.csv"):
+    lix_features = np.loadtxt("lix_score.csv", delimiter=",").reshape((-1,1))
+else:
+    lix_features = get_features(X, lix_score, "All Data")
+    np.savetxt("lix_score.csv", lix_features, delimiter=",")
 
-emoji_pca = PCA(n_components=20)
-emoji_pca.fit(emoji_features)
-print("Emoji PCA Explained VAR:", emoji_pca.explained_variance_ratio_, "Total VAR:", emoji_pca.explained_variance_ratio_.sum())
+emoji_pca_n = 5
+if os.path.isfile("emoji_features.csv"):
+    emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
+    emoji_pca = PCA(n_components=emoji_pca_n)
+    emoji_pca.fit(emoji_features)  
+    emoji_features = emoji_pca.transform(emoji_features)
+else:
+    emoji_features = get_features(X, emoji_embeds, "All Data")
+    np.savetxt("emoji_features.csv",  emoji_features, delimiter=",")
+    emoji_pca = PCA(n_components=emoji_pca_n)
+    emoji_pca.fit(emoji_features)  
+    emoji_features = emoji_pca.transform(emoji_features)
 
-X_train_features = np.concatenate((count_features,pos_features,lix_features, emoji_pca.transform(emoji_features)), axis=1)
+if os.path.isfile("get_sent_polarity.csv"):
+    sent_features = np.loadtxt("get_sent_polarity.csv", delimiter=",")
+else:
+    sent_features = get_features(X, get_sent_polarity, "All Data")
+    np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",")
 
-pos_features = get_features(X_test_all, pos_counts, "Test")
-
-count_features = get_features(X_test_all, author_style_counts, "Test")
-
-lix_features = get_features(X_test_all, lix_score, "Test")
-
-emoji_features = get_features(X_test_all, emoji_embeds, "Test")
-
-print(emoji_features.shape)
-
-X_test_features = np.concatenate((count_features,pos_features,lix_features, emoji_pca.transform(emoji_features)), axis=1)
+X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features), axis=1)
 
 random_forest_list = []
 one_nn_list = []
 three_nn_list = []
 five_nn_list = []
+log_reg_list = []
 
 # KFold validation to pick the best classifier
-kf = KFold(n_splits=3)
+kf = KFold(n_splits=7)
 
 for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     X_train, X_test = X_train_features[train_index,:], X_train_features[test_index,:]
-    y_train, y_test = y_train_all[train_index], y_train_all[test_index]
+    y_train, y_test = y[train_index], y[test_index]
     
     ratio_train_i = (y_train == "I").sum()/len(y_train)
     ratio_train_ni = (y_train == "NI").sum()/len(y_train)
@@ -118,37 +136,52 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     one_nn_list.append((acc_train,acc_test))
     print(f"1-NN acc (Train): {acc_train:.4f}")
     print(f"1-NN (Test): {acc_test:.4f}")
+    
+    pipe = make_pipeline(StandardScaler(), LogisticRegression())
+    pipe.fit(X_train, y_train)
+    print("Log. Reg:", pipe.score(X_test, y_test))
+    acc_train = pipe.score(X_train, y_train)
+    acc_test = pipe.score(X_test, y_test)
+    log_reg_list.append((acc_train,acc_test))
+    print(pipe.get_params()['logisticregression'].coef_)
+    
+    print("Train NI Averages: ")
+    print(X_train[y_train=="NI",:].mean(axis=0))
+    print("Train I Averages: ")
+    print(X_train[y_train=="I",:].mean(axis=0))
 
 random_forest_list = np.array(random_forest_list)
 one_nn_list = np.array(one_nn_list)
 three_nn_list = np.array(three_nn_list)
 five_nn_list = np.array(five_nn_list)
+log_reg_list = np.array(log_reg_list)
 
-print(random_forest_list)
-print(one_nn_list)
-print(three_nn_list)
-print(five_nn_list)
+print("Random Forest Averages: ", random_forest_list.mean(axis=0))
+print("1-NN Averages: ", one_nn_list.mean(axis=0))
+print("3-NN Averages: ", three_nn_list.mean(axis=0))
+print("5-NN Averages: ", five_nn_list.mean(axis=0))
+print("Log Reg Averages: ", log_reg_list.mean(axis=0))
 
-clf = RandomForestClassifier()
-clf.fit(X_train_features, y_train_all)
-y_train_pred = clf.predict(X_train_features)
-y_test_pred = clf.predict(X_test_features)
-acc_train = np.sum(y_train_pred == y_train_all) / len(y_train_all)
-acc_test = np.sum(y_test_pred == y_test_all) / len(y_test_all)
-
-print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
-print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
-# Acc: 82% - 90% Depending on the split
-
-pipe = make_pipeline(StandardScaler(), LogisticRegression())
-pipe.fit(X_train_features, y_train_all)
-print("Log. Reg:", pipe.score(X_test_features, y_test_all))
-print(pipe.get_params()['logisticregression'].coef_)
-
-print("Train NI Averages: ")
-print(X_train_features[y_train_all=="NI",:].mean(axis=0))
-print("Train I Averages: ")
-print(X_train_features[y_train_all=="I",:].mean(axis=0))
+#clf = RandomForestClassifier()
+#clf.fit(X_train_features, y_train_all)
+#y_train_pred = clf.predict(X_train_features)
+#y_test_pred = clf.predict(X_test_features)
+#acc_train = np.sum(y_train_pred == y_train_all) / len(y_train_all)
+#acc_test = np.sum(y_test_pred == y_test_all) / len(y_test_all)
+#
+#print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
+#print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
+## Acc: 82% - 90% Depending on the split
+#
+#pipe = make_pipeline(StandardScaler(), LogisticRegression())
+#pipe.fit(X_train_features, y_train_all)
+#print("Log. Reg:", pipe.score(X_test_features, y_test_all))
+#print(pipe.get_params()['logisticregression'].coef_)
+#
+#print("Train NI Averages: ")
+#print(X_train_features[y_train_all=="NI",:].mean(axis=0))
+#print("Train I Averages: ")
+#print(X_train_features[y_train_all=="I",:].mean(axis=0))
 
 """
 

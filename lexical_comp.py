@@ -17,6 +17,7 @@ def lix_score(author_tweet_list):
         tokenized_tweet = tokenize_tweet(tweet, True)
         long_words = len([w for w in tokenized_tweet if len(w) > 6])
         # |[A-Z][a-z]+
+        # RegEx to find the ends of sentences 
         reg_filter = regex.findall(r'[.;] |[.]\n', " ".join(tokenized_tweet))
         periods = len(reg_filter)
         n_words = len(tokenized_tweet)

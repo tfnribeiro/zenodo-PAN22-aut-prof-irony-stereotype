@@ -32,9 +32,7 @@ def author_style_counts(author_tweet_list):
         author_urltag_count += len(reg_filter)
         emoji_counter = len([c for c in tweet if c in emoji.UNICODE_EMOJI['en']])
         author_total_emoji += emoji_counter
-        tweet = tweet.replace("#USER#","")
-        tweet = tweet.replace("#HASHTAG#","")
-        tweet = tweet.replace("#URL#","")
+        tweet = tokenize_tweet(tweet, as_list=False)
         reg_filter = regex.findall(r'[A-Z]', tweet)
         tweet_capital_letters = len(reg_filter)
         reg_filter = regex.findall(r'[a-z]', tweet)
