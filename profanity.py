@@ -2,6 +2,7 @@ import numpy as np
 from zmq import THREAD_SCHED_POLICY_DFLT
 from read_files import *
 import string
+import pandas as pd
 from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
 from sklearn.model_selection import train_test_split
@@ -13,60 +14,91 @@ from sklearn.model_selection import train_test_split
 #OR number of tweets with profanity 
 #try both!
 
-prof_file = open('profanity_list.txt', 'r', encoding= 'utf-8')
-prof_list = {word.rstrip() for word in prof_file.readlines()}
-prof_file.close()
+# prof_file = open('profanity_list.txt', 'r', encoding= 'utf-8')
+# prof_list = [word.rstrip() for word in prof_file.readlines()]
+# prof_file.close()
 
-#preprocessing 
-X = np.char.lower(X) #lowercase
-X = np.char.strip(X, string.punctuation) #stripping
+# #preprocessing 
+# X = np.char.lower(X) #lowercase
+# X = np.char.strip(X, string.punctuation) #stripping
 
-# user_counts = []
-# for user in X:
+# #count array
+# count_array = np.full((X.shape[0], len(prof_list)), 0)
+
+# for n, user in enumerate(X):
 #     freq = FreqDist()
 #     for tweet in user:
 #         for word in word_tokenize(tweet):
 #             freq[word] += 1
-#     profanity = prof_list.intersection(set(freq.keys()))
-#     count = 0
+#     profanity = set(prof_list).intersection(set(freq.keys()))
 #     for word in profanity:
-#         count += freq[word]
-#     user_counts.append(count)
+#         count_array[n, prof_list.index(word)] = freq[word]
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+# # #save count array to dataframe csv
+# df = pd.DataFrame(count_array, columns = prof_list)
+# df.to_csv('profanity_counts.csv')
+
+
+# #most frequent profane words for each category 
+# count_array = pd.read_csv('profanity_counts.csv', index_col=[0], delimiter = ',')
+# i_top30 = count_array.loc[(np.where(y=='I')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
+# ni_top30 = count_array.loc[(np.where(y=='NI')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
+
+# ploti = i_top30.plot(kind = 'barh', title = "Ironic Profanity")
+# ploti.get_figure().savefig('plot_i.png')
+
+# plotni = ni_top30.plot(kind = 'barh', title = "Non-Ironic Profanity")
+# plotni.get_figure().savefig('plot_ni.png')
+
+
+#PCA dimensionality reduction 
+
+
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
 # Total sentences == 200
-best_acc = -1
-best_parameters = (-1)
-profanity_threshhold = np.arange(5,100,5)
-for threshold in profanity_threshhold:
-    acc = -1
-    correct = 0
-    for i in range(len(X_train)):
-        test_user = X_train[i]
-        count_prof = 0
-        freq = FreqDist()
-        for tweet in test_user:
-            for word in word_tokenize(tweet):
-                freq[word] += 1
-        profanity = prof_list.intersection(set(freq.keys()))
-        for word in profanity:
-            count_prof += freq[word]
+# best_acc = -1
+# best_parameters = (-1)
+# profanity_threshhold = np.arange(5,100,5)
+# counts = []
+# for threshold in profanity_threshhold:
+#     acc = -1
+#     correct = 0
+#     for i in range(len(X_train)):
+#         test_user = X_train[i]
+#         count_prof = 0
+#         freq = FreqDist()
+#         for tweet in test_user:
+#             for word in word_tokenize(tweet):
+#                 freq[word] += 1
+#         profanity = prof_list.intersection(set(freq.keys()))
+#         for word in profanity:
+#             count_prof += freq[word]
         
-        label = "NI"
-        if count_prof > threshold:
-            label = "I"
+#         counts.append(count_prof)
+#         label = "NI"
+#         if count_prof > threshold:
+#             label = "I"
     
-        if label == y_train[i]:
-            correct += 1
-    acc = correct/len(y_train)
-    print("Parameters: ", (threshold), "Acc: ", correct/len(y_train))
-    if acc > best_acc:
-        print("In if", best_acc)
-        best_parameters = threshold
-        best_acc = acc
-print("Current best params: ", best_parameters)
-print("Best Parameters: ", best_parameters, "Acc: ", best_acc)
+#         if label == y_train[i]:
+#             correct += 1
+
+#         print(profanity, y_train[i])
+
+#     acc = correct/len(y_train)
+#     print("Parameters: ", (threshold), "Acc: ", correct/len(y_train))
+#     if acc > best_acc:
+#         print("In if", best_acc)
+#         best_parameters = threshold
+#         best_acc = acc
+# print("Current best params: ", best_parameters)
+# print("Best Parameters: ", best_parameters, "Acc: ", best_acc)
+
+# counts = np.array(counts)
+# y_train = np.array(y_train)
+
+# print("Average I: ", np.mean(counts[np.where(y_train == 'I')[0]]))
+# print("Average NI: ", np.mean(counts[np.where(y_train == 'NI')[0]]))
 
 
 """
