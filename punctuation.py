@@ -11,12 +11,11 @@ def count_punctuation(tweetlist):
     weird_count = 0
 
     for tweet in tweetlist:
-        #count repeated punctuation and ".*"
+        #count repeated punctuation and ""
         weird = re.findall('(\.\.+|\?\?+|\!\!+|".*")', tweet)
         weird_count += len(weird)
-        re.sub('(\.\.+|\?\?+|\!\!+)', '', tweet)
-
-        #count regular punctuation
+        tweet = re.sub('(\.\.+|\?\?+|\!\!+)', '', tweet)
+        #count other punctuation
         all = re.findall('(\.|\?|\!)', tweet)
         punctu_count += len(all)
         
