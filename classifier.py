@@ -5,6 +5,7 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
+from sklearn.decomposition import SparsePCA
 from sklearn.pipeline import make_pipeline
 from pos_counts import *
 from count_features import *
@@ -69,7 +70,20 @@ else:
     sent_features = get_features(X, get_sent_polarity, "All Data")
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",")
 
-X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features), axis=1)
+profanity_components = 10
+if os.path.isfile("profanity_counts.csv"):
+    profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
+    profanity_pca = SparsePCA(n_components=profanity_components)
+    profanity_pca.fit(profanity_features)
+    profanity_features = profanity_pca.transform(profanity_features)
+else:
+    profanity_features = get_features(X, profanity_embeds, "All Data")
+    np.savetxt("profanity_counts.csv",  emoji_features, delimiter=",")
+    profanity_pca = SparsePCA(n_components=profanity_components)
+    profanity_pca.fit(profanity_features)  
+    profanity_features = profanity_pca.transform(profanity_features)
+
+X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, profanity_features), axis=1)
 
 random_forest_list = []
 one_nn_list = []
