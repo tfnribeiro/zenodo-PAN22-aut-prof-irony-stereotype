@@ -6,6 +6,11 @@ import pandas as pd
 from nltk.tokenize import word_tokenize
 from nltk.probability import FreqDist
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.decomposition import SparsePCA #used for sparse data 
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold
 
 #profanity list from:
 #https://github.com/zacanger/profane-words
@@ -14,13 +19,13 @@ from sklearn.model_selection import train_test_split
 #OR number of tweets with profanity 
 #try both!
 
-# prof_file = open('profanity_list.txt', 'r', encoding= 'utf-8')
-# prof_list = [word.rstrip() for word in prof_file.readlines()]
-# prof_file.close()
+prof_file = open('profanity_list.txt', 'r', encoding= 'utf-8')
+prof_list = [word.rstrip() for word in prof_file.readlines()]
+prof_file.close()
 
-# #preprocessing 
-# X = np.char.lower(X) #lowercase
-# X = np.char.strip(X, string.punctuation) #stripping
+#preprocessing 
+X = np.char.lower(X) #lowercase
+X = np.char.strip(X, string.punctuation) #stripping
 
 # #count array
 # count_array = np.full((X.shape[0], len(prof_list)), 0)
@@ -40,7 +45,7 @@ from sklearn.model_selection import train_test_split
 
 
 # #most frequent profane words for each category 
-# count_array = pd.read_csv('profanity_counts.csv', index_col=[0], delimiter = ',')
+count_array = pd.read_csv('profanity_counts.csv', index_col=[0], delimiter = ',')
 # i_top30 = count_array.loc[(np.where(y=='I')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
 # ni_top30 = count_array.loc[(np.where(y=='NI')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
 
@@ -52,9 +57,44 @@ from sklearn.model_selection import train_test_split
 
 
 #PCA dimensionality reduction 
+# pca = SparsePCA(n_components = 10, random_state=0).fit(count_array)
+# count_array_trans = pca.transform(count_array)
+# np.savetxt('profanity_counts_pca.csv', count_array_trans, delimiter = ',')
+
+#PCA plot - 2 principal components!
+#pca = SparsePCA(n_components = 2, random_state=0).fit(count_array)
+# count_array_trans = pca.transform(count_array)
+# plt.figure()
+# plt.scatter(count_array_trans[np.where(y=='I')[0],0], count_array_trans[np.where(y=='I')[0],1],color = 'red', label = 'I')
+# plt.scatter(count_array_trans[np.where(y=='NI')[0],0], count_array_trans[np.where(y=='NI')[0],1],color = 'blue', label = 'NI')
+# plt.xlim((-5,30))
+# plt.ylim((-5,30))
+# plt.savefig('pca2plot.png')
 
 
-#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+#Random Forest Classifier - 0.8 accuracy???
+prof_pca = np.loadtxt('profanity_counts_pca.csv', delimiter = ',')
+# X_train, X_test, y_train, y_test = train_test_split(prof_pca, y, test_size=0.3)
+
+# rf = RandomForestClassifier(max_depth=3)
+# rf.fit(X_train, y_train)
+# results = rf.predict(X_test)
+# print("Accuracy:", accuracy_score(y_test, results))
+
+kf = KFold(n_splits=5)
+accuracies = []
+rf = RandomForestClassifier(max_depth=3)
+for train, test in kf.split(prof_pca):
+    X_train, X_test, y_train, y_test = prof_pca[train], prof_pca[test], y[train], y[test]
+    rf = RandomForestClassifier(max_depth=3)
+    rf.fit(X_train, y_train)
+    results = rf.predict(X_test)
+    accuracies.append(accuracy_score(y_test, results))
+print(accuracies)
+print(np.mean(accuracies))
+
+
+
 
 # Total sentences == 200
 # best_acc = -1
