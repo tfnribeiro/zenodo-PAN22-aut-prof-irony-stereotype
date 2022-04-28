@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
 from sklearn.decomposition import SparsePCA
 from sklearn.pipeline import make_pipeline
+from sklearn import svm
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
@@ -55,14 +56,12 @@ emoji_pca_n = 5
 if os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
     emoji_pca = PCA(n_components=emoji_pca_n)
-    emoji_pca.fit(emoji_features)  
-    emoji_features = emoji_pca.transform(emoji_features)
+    emoji_features = emoji_pca.fit_transform(emoji_features)
 else:
     emoji_features = get_features(X, emoji_embeds, "All Data")
     np.savetxt("emoji_features.csv",  emoji_features, delimiter=",")
     emoji_pca = PCA(n_components=emoji_pca_n)
-    emoji_pca.fit(emoji_features)  
-    emoji_features = emoji_pca.transform(emoji_features)
+    emoji_features = emoji_pca.fit_transform(emoji_features)
 
 if os.path.isfile("get_sent_polarity.csv"):
     sent_features = np.loadtxt("get_sent_polarity.csv", delimiter=",")
@@ -74,14 +73,12 @@ profanity_components = 10
 if os.path.isfile("profanity_counts.csv"):
     profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
     profanity_pca = SparsePCA(n_components=profanity_components)
-    profanity_pca.fit(profanity_features)
-    profanity_features = profanity_pca.transform(profanity_features)
+    profanity_features = profanity_pca.fit_transform(profanity_features)  
 else:
     profanity_features = get_features(X, profanity_embeds, "All Data")
-    np.savetxt("profanity_counts.csv",  emoji_features, delimiter=",")
+    np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",")
     profanity_pca = SparsePCA(n_components=profanity_components)
-    profanity_pca.fit(profanity_features)  
-    profanity_features = profanity_pca.transform(profanity_features)
+    profanity_features = profanity_pca.fit_transform(profanity_features)  
 
 X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, profanity_features), axis=1)
 
@@ -90,7 +87,7 @@ one_nn_list = []
 three_nn_list = []
 five_nn_list = []
 log_reg_list = []
-
+svm_list = []
 # KFold validation to pick the best classifier
 kf = KFold(n_splits=7)
 
@@ -103,6 +100,7 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
 
     ratio_test_i = (y_test == "I").sum()/len(y_test)
     ratio_test_ni = (y_test == "NI").sum()/len(y_test)
+    print(f"Train Labels: {len(y_train)} | Test Labels: {len(y_test)}")
     print(f"Train Ratio of Labels (split: {i+1}): I: {ratio_train_i} | NI:{ratio_train_ni}")
     print(f"Test Ratio of Labels (split: {i+1}): I: {ratio_test_i} | NI:{ratio_test_ni}")
     #X_train, X_test, y_train, y_test = train_test_split(list_features, y, test_size=0.3)
@@ -151,30 +149,39 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     print(f"1-NN acc (Train): {acc_train:.4f}")
     print(f"1-NN (Test): {acc_test:.4f}")
     
+    pipe = make_pipeline(StandardScaler(), svm.SVC(gamma="auto"))
+    pipe.fit(X_train, y_train)
+    acc_train = pipe.score(X_train, y_train)
+    acc_test = pipe.score(X_test, y_test)
+    print("SVM:", acc_test)
+    svm_list.append((acc_train,acc_test))
+    
+    #print("Train NI Averages: ")
+    #print(X_train[y_train=="NI",:].mean(axis=0))
+    #print("Train I Averages: ")
+    #print(X_train[y_train=="I",:].mean(axis=0))
+
     pipe = make_pipeline(StandardScaler(), LogisticRegression())
     pipe.fit(X_train, y_train)
     print("Log. Reg:", pipe.score(X_test, y_test))
     acc_train = pipe.score(X_train, y_train)
     acc_test = pipe.score(X_test, y_test)
     log_reg_list.append((acc_train,acc_test))
-    print(pipe.get_params()['logisticregression'].coef_)
-    
-    print("Train NI Averages: ")
-    print(X_train[y_train=="NI",:].mean(axis=0))
-    print("Train I Averages: ")
-    print(X_train[y_train=="I",:].mean(axis=0))
 
+print(pipe.get_params()['logisticregression'].coef_)
 random_forest_list = np.array(random_forest_list)
 one_nn_list = np.array(one_nn_list)
 three_nn_list = np.array(three_nn_list)
 five_nn_list = np.array(five_nn_list)
 log_reg_list = np.array(log_reg_list)
+svm_list = np.array(svm_list)
 
 print("Random Forest Averages: ", random_forest_list.mean(axis=0))
 print("1-NN Averages: ", one_nn_list.mean(axis=0))
 print("3-NN Averages: ", three_nn_list.mean(axis=0))
 print("5-NN Averages: ", five_nn_list.mean(axis=0))
 print("Log Reg Averages: ", log_reg_list.mean(axis=0))
+print("SVM Averages: ", svm_list.mean(axis=0))
 
 #clf = RandomForestClassifier()
 #clf.fit(X_train_features, y_train_all)
