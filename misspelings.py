@@ -10,8 +10,16 @@ def misspelled(tweetlist):
     for tweet in tweetlist:
         words = tweet_to_wordlist(tweet)
         miss = sp.unknown(words)
-        print(miss)
         misspells += len(miss)
         word_count += len(words)
     
     return misspells/word_count
+
+
+def all_misspelled(all_user):
+    missrates = []
+    for user in all_user:
+        missrate = misspelled(user)
+        missrates.append(missrate)
+    
+    return missrates
