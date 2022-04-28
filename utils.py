@@ -1,4 +1,5 @@
 from nltk.tokenize import word_tokenize
+import re
 
 def tokenize_tweet(tweet_to_tokenize, as_list=False):
     tweet_to_tokenize = tweet_to_tokenize.replace("#USER#","")
