@@ -1,11 +1,12 @@
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split, KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, SparsePCA
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import f1_score
+from sklearn import svm
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
@@ -79,6 +80,7 @@ else:
 emoji_pca_n = 5
 if os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
+    print(emoji_features.shape)
     emoji_pca = PCA(n_components=emoji_pca_n)
     emoji_pca.fit(emoji_features)  
     emoji_features = emoji_pca.transform(emoji_features)
@@ -95,14 +97,34 @@ else:
     sent_features = get_features(X, get_sent_polarity, "All Data")
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",")
 
-X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, punct_features, miss_features), axis=1)
+profanity_components = 10
+if os.path.isfile("profanity_counts.csv"):
+    profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
+    profanity_pca = SparsePCA(n_components=profanity_components)
+    profanity_pca.fit(profanity_features)
+    profanity_features = profanity_pca.transform(profanity_features)
+else:
+    profanity_features = get_features(X, profanity_embeds, "All Data")
+    np.savetxt("profanity_counts.csv",  emoji_features, delimiter=",")
+    profanity_pca = SparsePCA(n_components=profanity_components)
+    profanity_pca.fit(profanity_features)  
+    profanity_features = profanity_pca.transform(profanity_features)
+
+X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, punct_features, miss_features,profanity_features), axis=1)
 
 random_forest_list = []
 one_nn_list = []
 three_nn_list = []
 five_nn_list = []
 log_reg_list = []
+svm_list = []
 
+f1_random_forest_list = []
+f1_one_nn_list = []
+f1_three_nn_list = []
+f1_five_nn_list = []
+f1_log_reg_list = []
+f1_svm_list = []
 # KFold validation to pick the best classifier
 kf = KFold(n_splits=7)
 
@@ -126,6 +148,7 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
 
     acc_train = np.sum(y_train_pred == y_train) / len(y_train)
     acc_test = np.sum(y_test_pred == y_test) / len(y_test)
+    f1_random_forest_list.append(f1_score(y_test, y_test_pred,average='weighted'))
     random_forest_list.append((acc_train,acc_test))
     print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
     print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
@@ -138,6 +161,7 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     acc_train = np.sum(y_train_pred == y_train) / len(y_train)
     acc_test = np.sum(y_test_pred == y_test) / len(y_test)
     five_nn_list.append((acc_train,acc_test))
+    f1_five_nn_list.append(f1_score(y_test, y_test_pred,average='weighted'))
     print(f"5-NN acc (Train): {acc_train:.4f}")
     print(f"5-NN (Test): {acc_test:.4f}")
 
@@ -149,6 +173,7 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     acc_train = np.sum(y_train_pred == y_train) / len(y_train)
     acc_test = np.sum(y_test_pred == y_test) / len(y_test)
     three_nn_list.append((acc_train,acc_test))
+    f1_three_nn_list.append(f1_score(y_test, y_test_pred,average='weighted'))
     print(f"3-NN acc (Train): {acc_train:.4f}")
     print(f"3-NN (Test): {acc_test:.4f}")
 
@@ -160,21 +185,31 @@ for i, (train_index, test_index) in enumerate(kf.split(X_train_features)):
     acc_train = np.sum(y_train_pred == y_train) / len(y_train)
     acc_test = np.sum(y_test_pred == y_test) / len(y_test)
     one_nn_list.append((acc_train,acc_test))
+    f1_one_nn_list.append(f1_score(y_test, y_test_pred,average='weighted'))
     print(f"1-NN acc (Train): {acc_train:.4f}")
     print(f"1-NN (Test): {acc_test:.4f}")
     
+    pipe = make_pipeline(StandardScaler(), svm.SVC(gamma="auto"))
+    pipe.fit(X_train, y_train)
+    acc_train = pipe.score(X_train, y_train)
+    acc_test = pipe.score(X_test, y_test)
+    print("SVM:", acc_test)
+    svm_list.append((acc_train,acc_test))
+    f1_svm_list.append(f1_score(y_test, y_test_pred,average='weighted'))
+    
+    #print("Train NI Averages: ")
+    #print(X_train[y_train=="NI",:].mean(axis=0))
+    #print("Train I Averages: ")
+    #print(X_train[y_train=="I",:].mean(axis=0))
+
     pipe = make_pipeline(StandardScaler(), LogisticRegression())
     pipe.fit(X_train, y_train)
     print("Log. Reg:", pipe.score(X_test, y_test))
     acc_train = pipe.score(X_train, y_train)
     acc_test = pipe.score(X_test, y_test)
     log_reg_list.append((acc_train,acc_test))
-    print(pipe.get_params()['logisticregression'].coef_)
+    f1_log_reg_list.append(f1_score(y_test, y_test_pred,average='weighted'))
     
-    print("Train NI Averages: ")
-    print(X_train[y_train=="NI",:].mean(axis=0))
-    print("Train I Averages: ")
-    print(X_train[y_train=="I",:].mean(axis=0))
 
 random_forest_list = np.array(random_forest_list)
 one_nn_list = np.array(one_nn_list)
@@ -182,11 +217,25 @@ three_nn_list = np.array(three_nn_list)
 five_nn_list = np.array(five_nn_list)
 log_reg_list = np.array(log_reg_list)
 
+f1_random_forest_list = np.array(f1_random_forest_list)
+f1_one_nn_list = np.array(f1_one_nn_list)
+f1_three_nn_list = np.array(f1_three_nn_list)
+f1_five_nn_list = np.array(f1_five_nn_list)
+f1_log_reg_list = np.array(f1_log_reg_list)
+f1_svm_list = np.array(f1_svm_list)
+
 print("Random Forest Averages: ", random_forest_list.mean(axis=0))
 print("1-NN Averages: ", one_nn_list.mean(axis=0))
 print("3-NN Averages: ", three_nn_list.mean(axis=0))
 print("5-NN Averages: ", five_nn_list.mean(axis=0))
 print("Log Reg Averages: ", log_reg_list.mean(axis=0))
+
+print("Random Forest (F1-Score) W.Averages: ", f1_random_forest_list.mean(axis=0))
+print("1-NN (F1-Score) W.Averages: ", f1_one_nn_list.mean(axis=0))
+print("3-NN (F1-Score) W.Averages: ", f1_three_nn_list.mean(axis=0))
+print("5-NN (F1-Score) W.Averages: ", f1_five_nn_list.mean(axis=0))
+print("Log Reg (F1-Score) W.Averages: ", f1_log_reg_list.mean(axis=0))
+print("SVM (F1-Score) W.Averages: ", f1_svm_list.mean(axis=0))
 
 #clf = RandomForestClassifier()
 #clf.fit(X_train_features, y_train_all)
