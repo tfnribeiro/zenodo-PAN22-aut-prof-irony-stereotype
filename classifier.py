@@ -105,7 +105,7 @@ if os.path.isfile("profanity_counts.csv"):
     profanity_features = profanity_pca.transform(profanity_features)
 else:
     profanity_features = get_features(X, profanity_embeds, "All Data")
-    np.savetxt("profanity_counts.csv",  emoji_features, delimiter=",")
+    np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",")
     profanity_pca = SparsePCA(n_components=profanity_components)
     profanity_pca.fit(profanity_features)  
     profanity_features = profanity_pca.transform(profanity_features)
