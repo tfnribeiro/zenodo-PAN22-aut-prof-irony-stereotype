@@ -11,6 +11,7 @@ from sklearn.decomposition import SparsePCA #used for sparse data
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
+from nltk.stem.porter import *
 
 #profanity list from:
 #https://github.com/zacanger/profane-words
@@ -27,13 +28,15 @@ prof_file.close()
 X = np.char.lower(X) #lowercase
 X = np.char.strip(X, string.punctuation) #stripping
 
-# #count array
+#count array
 # count_array = np.full((X.shape[0], len(prof_list)), 0)
+# stemmer = PorterStemmer()
 
 # for n, user in enumerate(X):
 #     freq = FreqDist()
 #     for tweet in user:
 #         for word in word_tokenize(tweet):
+#             word = stemmer.stem(word)
 #             freq[word] += 1
 #     profanity = set(prof_list).intersection(set(freq.keys()))
 #     for word in profanity:
@@ -44,16 +47,19 @@ X = np.char.strip(X, string.punctuation) #stripping
 # df.to_csv('profanity_counts.csv')
 
 
+#DATA VISUALIZATION
+#STEMMING? 
+
 # #most frequent profane words for each category 
 count_array = pd.read_csv('profanity_counts.csv', index_col=[0], delimiter = ',')
-# i_top30 = count_array.loc[(np.where(y=='I')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
-# ni_top30 = count_array.loc[(np.where(y=='NI')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
+i_top30 = count_array.loc[(np.where(y=='I')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
+ni_top30 = count_array.loc[(np.where(y=='NI')[0])].sum(axis = 0).sort_values(ascending = False).head(30)
 
-# ploti = i_top30.plot(kind = 'barh', title = "Ironic Profanity")
-# ploti.get_figure().savefig('plot_i.png')
+ploti = i_top30.plot(kind = 'barh', title = "Ironic Profanity")
+ploti.get_figure().savefig('plot_i.png')
 
-# plotni = ni_top30.plot(kind = 'barh', title = "Non-Ironic Profanity")
-# plotni.get_figure().savefig('plot_ni.png')
+plotni = ni_top30.plot(kind = 'barh', title = "Non-Ironic Profanity")
+plotni.get_figure().savefig('plot_ni.png')
 
 
 #PCA dimensionality reduction 
@@ -81,17 +87,17 @@ prof_pca = np.loadtxt('profanity_counts_pca.csv', delimiter = ',')
 # results = rf.predict(X_test)
 # print("Accuracy:", accuracy_score(y_test, results))
 
-kf = KFold(n_splits=5)
-accuracies = []
-rf = RandomForestClassifier(max_depth=3)
-for train, test in kf.split(prof_pca):
-    X_train, X_test, y_train, y_test = prof_pca[train], prof_pca[test], y[train], y[test]
-    rf = RandomForestClassifier(max_depth=3)
-    rf.fit(X_train, y_train)
-    results = rf.predict(X_test)
-    accuracies.append(accuracy_score(y_test, results))
-print(accuracies)
-print(np.mean(accuracies))
+# kf = KFold(n_splits=5)
+# accuracies = []
+# rf = RandomForestClassifier(max_depth=3)
+# for train, test in kf.split(prof_pca):
+#     X_train, X_test, y_train, y_test = prof_pca[train], prof_pca[test], y[train], y[test]
+#     rf = RandomForestClassifier(max_depth=3)
+#     rf.fit(X_train, y_train)
+#     results = rf.predict(X_test)
+#     accuracies.append(accuracy_score(y_test, results))
+# print(accuracies)
+# print(np.mean(accuracies))
 
 
 
