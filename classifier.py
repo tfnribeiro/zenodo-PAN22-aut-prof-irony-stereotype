@@ -45,6 +45,18 @@ if os.path.isfile("author_style_counts.csv"):
 else:
     count_features = get_features(X, author_style_counts, "All Data")
     np.savetxt("author_style_counts.csv", count_features, delimiter=",")
+    
+if os.path.isfile("punct_score.csv"):
+    punct_features = np.loadtxt("punct_score.csv", delimiter=",")
+else:
+    punct_features = get_features(X, count_punctuation, "All Data")
+    np.savetxt("punct_score.csv", punct_features, delimiter=",")
+    
+if os.path.isfile("misspelled.csv"):
+    miss_features = np.loadtxt("misspelled.csv", delimiter=",").reshape((-1,1))
+else:
+    miss_features = get_features(X, misspelled, "All Data").reshape((-1,1))
+    np.savetxt("misspelled.csv", miss_features, delimiter=",")
 
 if os.path.isfile("lix_score.csv"):
     lix_features = np.loadtxt("lix_score.csv", delimiter=",").reshape((-1,1))
