@@ -38,6 +38,7 @@ for line in f:
     true_values[linev[0]] = linev[1]
 f.close()
 
+USERCODE_X = []
 X = []
 y = []
 
@@ -48,7 +49,7 @@ for FILE in glob.glob(os.path.join(DATA_HOME,"*.xml")):
     USERCODE = os.path.split(FILE)[-1][:-4]
     #This function should return a vectorial representation of a user
     repr = get_representation_tweets(FILE)
-
+    USERCODE_X.append(USERCODE)
     #We append the representation of the user to the X variable
     #and the class to the y vector
     try:
@@ -59,5 +60,5 @@ for FILE in glob.glob(os.path.join(DATA_HOME,"*.xml")):
 
 X = np.array(X)
 y = np.array(y)
-
+USERCODE_X = np.array(USERCODE_X)
 print("Load XML files complete, number of tweet profiles: ", len(X))

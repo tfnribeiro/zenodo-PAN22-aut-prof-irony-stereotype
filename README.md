@@ -8,9 +8,9 @@
 - Avg. Word Length - Tiago ✅
 - Avg. Tweet Length - Tiago ✅
 - Avg. Emoji Count - Tiago ✅
-- Repeated Punctuations Count "..." "?!" "!" "?" - Kaja
-- Number of Typos - Kaja
-- Avg. Profanity per tweet - Yana
+- Repeated Punctuations Count "..." "?!" "!" "?" - Kaja ✅
+- Number of Typos - Kaja ✅
+- Avg. Profanity per tweet - Yana ✅
 - Avg. Proportion of Capital Letters - Tiago ✅
 - Avg. Tweet LiX complexity - Tiago ✅
 - Syntactic Complexity - Yana
