@@ -11,6 +11,8 @@ from count_features import *
 from lexical_comp import *
 from sent_polarity import *
 from read_files import *
+from punctuation import *
+from misspelings import *
 import os 
 np.random.seed(0)
 
@@ -50,6 +52,18 @@ else:
     lix_features = get_features(X, lix_score, "All Data")
     np.savetxt("lix_score.csv", lix_features, delimiter=",")
 
+if os.path.isfile("punct_score.csv"):
+    punct_features = np.loadtxt("punct_score.csv", delimiter=",")
+else:
+    punct_features = get_features(X, count_punctuation, "All Data")
+    np.savetxt("punct_score.csv", punct_features, delimiter=",")
+    
+if os.path.isfile("misspelled.csv"):
+    miss_features = np.loadtxt("misspelled.csv", delimiter=",").reshape((-1,1))
+else:
+    miss_features = get_features(X, misspelled, "All Data").reshape((-1,1))
+    np.savetxt("misspelled.csv", miss_features, delimiter=",")
+
 emoji_pca_n = 5
 if os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
@@ -69,7 +83,7 @@ else:
     sent_features = get_features(X, get_sent_polarity, "All Data")
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",")
 
-X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features), axis=1)
+X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, punct_features, miss_features), axis=1)
 
 random_forest_list = []
 one_nn_list = []
