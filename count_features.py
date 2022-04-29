@@ -5,6 +5,8 @@ from nltk import FreqDist
 from nltk import word_tokenize
 import string
 from utils import *
+from nltk.stem.porter import *
+
 
 np.set_printoptions(suppress=True)
 """
@@ -78,8 +80,10 @@ def profanity_embeds(author_tweet_list):
     count_array = np.full((len(prof_list)), 0)
 
     freq = FreqDist()
+    stemmer = PorterStemmer()
     for tweet in author_tweet_list:
         for word in word_tokenize(tweet):
+            word = stemmer.stem(word)
             freq[word] += 1
     profanity = set(prof_list).intersection(set(freq.keys()))
     for word in profanity:
