@@ -1,6 +1,9 @@
 import emoji
 import regex
 import numpy as np
+from nltk import FreqDist
+from nltk import word_tokenize
+import string
 from utils import *
 
 np.set_printoptions(suppress=True)
@@ -65,3 +68,25 @@ def emoji_embeds(author_tweet_list):
             if c in emoji_counts:
                 emoji_counts[c] += 1
     return np.array(list(emoji_counts.values()))
+
+def profanity_embeds(author_tweet_list):
+    author_tweet_list = np.char.lower(author_tweet_list) #lowercase
+    author_tweet_list = np.char.strip(author_tweet_list, string.punctuation) #stripping
+
+
+    prof_list = [word.rstrip() for word in open('profanity_list.txt', 'r', encoding= 'utf-8').readlines()]
+    count_array = np.full((len(prof_list)), 0)
+
+    freq = FreqDist()
+    for tweet in author_tweet_list:
+        for word in word_tokenize(tweet):
+            freq[word] += 1
+    profanity = set(prof_list).intersection(set(freq.keys()))
+    for word in profanity:
+        count_array[prof_list.index(word)] = freq[word]
+
+    return count_array
+
+
+
+
