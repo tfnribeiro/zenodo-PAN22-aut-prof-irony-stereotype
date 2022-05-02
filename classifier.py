@@ -14,20 +14,18 @@ from sent_polarity import *
 from read_files import *
 from punctuation import *
 from misspelings import *
+from tqdm import tqdm
 import pandas as pd
 import os 
-np.random.seed(0)
+
+np.random.seed(1)
 
 def get_features(dataset, function, label="", report_per_cent=50):
     list_features = []
-    reported_values = set()
-    for i in range(len(dataset)):
+    print(f"Processing features: {function.__name__}")
+    for i in tqdm(range(len(dataset))):
         tweet_list = dataset[i]
         get_features = function(tweet_list)
-        per_cent_complete = round(i/len(dataset),2)*100
-        if  per_cent_complete % report_per_cent == 0 and per_cent_complete not in reported_values:
-            reported_values.add(per_cent_complete)
-            print(f"{label} Processing {per_cent_complete}% complete for features: {function.__name__}")
         list_features.append(get_features)
     print(f"{label} Processing for features: {function.__name__}, is complete!")
     return np.array(list_features)
@@ -99,11 +97,16 @@ if os.path.isfile("profanity_counts.csv"):
 else:
     profanity_features = get_features(X, profanity_embeds, "All Data")
     np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",", fmt='%f')
-
+    
+#emoji_pca = PCA(n_components=5) 
+#emoji_features = emoji_pca.fit_transform(emoji_features)
+#profanity_pca = SparsePCA(n_components=10)
+#profanity_features = profanity_pca.fit_transform(profanity_features)
+#
 #X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, punct_features, miss_features, profanity_features), axis=1)
-
-#feature_df = pd.DataFrame(np.concatenate((USERCODE_X.reshape((-1,1)),X_train_features,y.reshape((-1,1))),axis=1), columns=["input_file", "auth_vocabsize","type_token_rt","author_word_length_avg",
-#"avg_tweet_length","author_hashtag_count","author_usertag_count","author_urltag_count",
+#
+#feature_df = pd.DataFrame(np.concatenate((USERCODE_X.reshape((-1,1)),X_train_features,y.reshape((-1,1))),axis=1), columns=["input_file", "auth_vocabsize","type_token_rt","avg_author_word_length",
+#"avg_tweet_length","avg_author_hashtag_count","avg_author_usertag_count","avg_author_urltag_count",
 #"author_avg_emoji","avg_capital_lower_ratio","ADJ","ADP","ADV","CONJ","DET","NOUN","NUM","PRT","PRON","VERB",
 #"PUNCT","UNK","LiXScore", "emoji_pca_1", "emoji_pca_2", "emoji_pca_3", "emoji_pca_4", "emoji_pca_5", "pos", "neut", "neg", "compound",
 #"punct_normal_features_count", "punct_weird_features_count", "missspelled_features", "profanity_pca_1", "profanity_pca_2", "profanity_pca_3", "profanity_pca_4", "profanity_pca_5", "profanity_pca_6",
@@ -124,18 +127,21 @@ f1_five_nn_list = []
 f1_log_reg_list = []
 f1_svm_list = []
 # KFold validation to pick the best classifier
-kf = KFold(n_splits=4)
+kf = KFold(n_splits=7)
 
-emoji_pca_n = 5
+emoji_pca_n = 5 
 profanity_components = 10
 
-for i, (train_index, test_index) in enumerate(kf.split(X)):
+print(f"Performing Cross-Validation...")
+for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     print("Train: ", len(train_index), "Test: ", len(test_index))
-    emoji_pca = PCA(n_components=emoji_pca_n) 
+    emoji_pca = SparsePCA(n_components=emoji_pca_n) 
+    print("Performing Emoji-PCA")
     emoji_features_train = emoji_pca.fit_transform(emoji_features[train_index,:])
     emoji_features_test = emoji_pca.transform(emoji_features[test_index,:])
 
     profanity_pca = SparsePCA(n_components=profanity_components)
+    print("Performing Profanity-PCA")
     profanity_features_train = profanity_pca.fit_transform(emoji_features[train_index,:])
     profanity_features_test = profanity_pca.transform(emoji_features[test_index,:])
 
