@@ -34,63 +34,63 @@ def get_features(dataset, function, label="", report_per_cent=50):
 X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.25)
 
 #Cache the Values for the test set
+#pos
 if os.path.isfile("pos_features.csv"):
     pos_features = np.loadtxt("pos_features.csv", delimiter=",")
 else:
     pos_features = get_features(X, pos_counts, "All Data")
     np.savetxt("pos_features.csv", pos_features, delimiter=",", fmt='%f')
 
+#author style
 if os.path.isfile("author_style_counts.csv"):
     count_features = np.loadtxt("author_style_counts.csv", delimiter=",")
 else:
     count_features = get_features(X, author_style_counts, "All Data")
-    np.savetxt("author_style_counts.csv", count_features, delimiter=",", fmt='%f')
-    
-if os.path.isfile("punct_score.csv"):
-    punct_features = np.loadtxt("punct_score.csv", delimiter=",")
-else:
-    punct_features = get_features(X, count_punctuation, "All Data")
-    np.savetxt("punct_score.csv", punct_features, delimiter=",", fmt='%f')
-    
-if os.path.isfile("misspelled.csv"):
-    miss_features = np.loadtxt("misspelled.csv", delimiter=",").reshape((-1,1))
-else:
-    miss_features = get_features(X, misspelled, "All Data").reshape((-1,1))
-    np.savetxt("misspelled.csv", miss_features, delimiter=",", fmt='%f')
+    np.savetxt("author_style_counts.csv", count_features, delimiter=",", fmt='%f')    
 
+#lix
 if os.path.isfile("lix_score.csv"):
     lix_features = np.loadtxt("lix_score.csv", delimiter=",").reshape((-1,1))
 else:
     lix_features = get_features(X, lix_score, "All Data")
     np.savetxt("lix_score.csv", lix_features, delimiter=",", fmt='%f')
 
+#punctuation
 if os.path.isfile("punct_score.csv"):
     punct_features = np.loadtxt("punct_score.csv", delimiter=",")
 else:
     punct_features = get_features(X, count_punctuation, "All Data")
     np.savetxt("punct_score.csv", punct_features, delimiter=",", fmt='%f')
-    
+
+#seperated pronunciation
+if os.path.isfile("sep_punct_score.csv"):
+    sep_punct_features = np.loadtxt("sep_punct_score.csv", delimiter=",")
+else:
+    sep_punct_features = get_features(X, count_punctuation, "All Data")
+    np.savetxt("sep_punct_score.csv", punct_features, delimiter=",", fmt='%f')
+
+#missspelling
 if os.path.isfile("misspelled.csv"):
     miss_features = np.loadtxt("misspelled.csv", delimiter=",").reshape((-1,1))
 else:
     miss_features = get_features(X, misspelled, "All Data").reshape((-1,1))
     np.savetxt("misspelled.csv", miss_features, delimiter=",", fmt='%f')
 
-
+#emoji features
 if os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
 else:
     emoji_features = get_features(X, emoji_embeds, "All Data")
     np.savetxt("emoji_features.csv",  emoji_features, delimiter=",", fmt='%f')
     
-
+#sentence polarity
 if os.path.isfile("get_sent_polarity.csv"):
     sent_features = np.loadtxt("get_sent_polarity.csv", delimiter=",")
 else:
     sent_features = get_features(X, get_sent_polarity, "All Data")
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",", fmt='%f')
 
-
+#profanity
 if os.path.isfile("profanity_counts.csv"):
     profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
     
@@ -146,10 +146,10 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     profanity_features_test = profanity_pca.transform(emoji_features[test_index,:])
 
     X_train=  np.concatenate((count_features[train_index,:],pos_features[train_index,:], lix_features[train_index,:], 
-        emoji_features_train, sent_features[train_index,:], punct_features[train_index,:], miss_features[train_index,:], profanity_features_train), axis=1)
+        emoji_features_train, sent_features[train_index,:], sep_punct_features[train_index,:], miss_features[train_index,:], profanity_features_train), axis=1)
     
     X_test = np.concatenate((count_features[test_index,:],pos_features[test_index,:], lix_features[test_index,:], 
-        emoji_features_test, sent_features[test_index,:], punct_features[test_index,:], miss_features[test_index,:], profanity_features_test), axis=1)
+        emoji_features_test, sent_features[test_index,:], sep_punct_features[test_index,:], miss_features[test_index,:], profanity_features_test), axis=1)
     
     
     y_train, y_test = y[train_index], y[test_index]
