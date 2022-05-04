@@ -1,6 +1,31 @@
 import re
 import numpy as np
 
+def seperated_punctuation(tweetlist):
+    '''
+    This function counts the repeated and normal punctuation seperatly
+    :param: tweetlist list of tweets
+    :return: number of all punctuation groups array(7,)
+    '''
+    count_vector = np.zeros(7)
+    for tweet in tweetlist:
+        
+        multex = re.findall('\!\!+', tweet)
+        multqu = re.findall('\?\?+', tweet)
+        multpe = re.findall('\.\.+', tweet)
+        quote = re.findall('( "| “)', tweet)
+        
+        #replace all special punctuations
+        tweet = re.sub('(\.\.+|\?\?+|\!\!+)', '', tweet)
+        
+        ex = re.findall('\!', tweet)
+        pu = re.findall('\?', tweet)
+        pe = re.findall('\.', tweet)
+        count_vector = count_vector + np.array([len(multex), len(multqu), len(multpe), len(quote), len(ex), len(pu), len(pe)])
+        
+    #return array with the puctuation counts
+    return count_vector
+
 def count_punctuation(tweetlist):
     '''
     This function counts the repeated and normal punctuation
