@@ -66,8 +66,8 @@ else:
 if os.path.isfile("sep_punct_score.csv"):
     sep_punct_features = np.loadtxt("sep_punct_score.csv", delimiter=",")
 else:
-    sep_punct_features = get_features(X, count_punctuation, "All Data")
-    np.savetxt("sep_punct_score.csv", punct_features, delimiter=",", fmt='%f')
+    sep_punct_features = get_features(X, seperated_punctuation, "All Data")
+    np.savetxt("sep_punct_score.csv", sep_punct_features, delimiter=",", fmt='%f')
 
 #emoji features
 if os.path.isfile("emoji_features.csv"):
@@ -96,7 +96,7 @@ def predict(list_authors, classifier):
     count_features = get_features(list_authors, author_style_counts, "Individual Predict")
     lix_features = get_features(list_authors, lix_score, "Individual Predict")
     sent_features = get_features(list_authors, get_sent_polarity, "Individual Predict")
-    sep_punct_features = get_features(list_authors, count_punctuation, "Individual Predict")
+    sep_punct_features = get_features(list_authors, seperated_punctuation, "Individual Predict")
     
     emoji_features = get_features(list_authors, emoji_embeds, "Individual Predict")
     profanity_features = get_features(list_authors, profanity_embeds, "Individual Predict")
