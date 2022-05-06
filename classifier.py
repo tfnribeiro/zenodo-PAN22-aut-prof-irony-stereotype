@@ -13,7 +13,6 @@ from lexical_comp import *
 from sent_polarity import *
 from read_files import *
 from punctuation import *
-from misspelings import *
 from tqdm import tqdm
 import pandas as pd
 import os 
@@ -70,13 +69,6 @@ else:
     sep_punct_features = get_features(X, count_punctuation, "All Data")
     np.savetxt("sep_punct_score.csv", punct_features, delimiter=",", fmt='%f')
 
-#missspelling
-if os.path.isfile("misspelled.csv"):
-    miss_features = np.loadtxt("misspelled.csv", delimiter=",").reshape((-1,1))
-else:
-    miss_features = get_features(X, misspelled, "All Data").reshape((-1,1))
-    np.savetxt("misspelled.csv", miss_features, delimiter=",", fmt='%f')
-
 #emoji features
 if os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
@@ -105,14 +97,14 @@ def predict(list_authors, classifier):
     lix_features = get_features(list_authors, lix_score, "Individual Predict")
     sent_features = get_features(list_authors, get_sent_polarity, "Individual Predict")
     sep_punct_features = get_features(list_authors, count_punctuation, "Individual Predict")
-    miss_features = get_features(list_authors, misspelled, "Individual Predict").reshape((-1,1))
+    
     emoji_features = get_features(list_authors, emoji_embeds, "Individual Predict")
     profanity_features = get_features(list_authors, profanity_embeds, "Individual Predict")
 
     emoji_features = emoji_pca.transform(emoji_features)
     profanity_features = profanity_pca.transform(profanity_features)
 
-    x = np.concatenate((count_features, pos_features, lix_features, emoji_features, sent_features, sep_punct_features, miss_features, profanity_features), axis=1)
+    x = np.concatenate((count_features, pos_features, lix_features, emoji_features, sent_features, sep_punct_features, profanity_features), axis=1)
     return classifier.predict(x)
 
 #emoji_pca = PCA(n_components=5) 
@@ -120,13 +112,13 @@ def predict(list_authors, classifier):
 #profanity_pca = SparsePCA(n_components=10)
 #profanity_features = profanity_pca.fit_transform(profanity_features)
 #
-#X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, punct_features, miss_features, profanity_features), axis=1)
+#X_train_features = np.concatenate((count_features,pos_features, lix_features, emoji_features, sent_features, punct_features, profanity_features), axis=1)
 #
 #feature_df = pd.DataFrame(np.concatenate((USERCODE_X.reshape((-1,1)),X_train_features,y.reshape((-1,1))),axis=1), columns=["input_file", "auth_vocabsize","type_token_rt","avg_author_word_length",
 #"avg_tweet_length","avg_author_hashtag_count","avg_author_usertag_count","avg_author_urltag_count",
 #"author_avg_emoji","avg_capital_lower_ratio","ADJ","ADP","ADV","CONJ","DET","NOUN","NUM","PRT","PRON","VERB",
 #"PUNCT","UNK","LiXScore", "emoji_pca_1", "emoji_pca_2", "emoji_pca_3", "emoji_pca_4", "emoji_pca_5", "pos", "neut", "neg", "compound",
-#"punct_normal_features_count", "punct_weird_features_count", "missspelled_features", "profanity_pca_1", "profanity_pca_2", "profanity_pca_3", "profanity_pca_4", "profanity_pca_5", "profanity_pca_6",
+#"punct_normal_features_count", "punct_weird_features_count", "profanity_pca_1", "profanity_pca_2", "profanity_pca_3", "profanity_pca_4", "profanity_pca_5", "profanity_pca_6",
 #"profanity_pca_7", "profanity_pca_8","profanity_pca_9","profanity_pca_10", "label"])
 #feature_df.to_csv("pd_X_features.csv")
 
@@ -165,10 +157,10 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     profanity_features_test = profanity_pca.transform(profanity_features[test_index,:])
 
     X_train=  np.concatenate((count_features[train_index,:],pos_features[train_index,:], lix_features[train_index,:], 
-        emoji_features_train, sent_features[train_index,:], sep_punct_features[train_index,:], miss_features[train_index,:], profanity_features_train), axis=1)
+        emoji_features_train, sent_features[train_index,:], sep_punct_features[train_index,:], profanity_features_train), axis=1)
     
     X_test = np.concatenate((count_features[test_index,:],pos_features[test_index,:], lix_features[test_index,:], 
-        emoji_features_test, sent_features[test_index,:], sep_punct_features[test_index,:], miss_features[test_index,:], profanity_features_test), axis=1)
+        emoji_features_test, sent_features[test_index,:], sep_punct_features[test_index,:], profanity_features_test), axis=1)
     
     
     y_train, y_test = y[train_index], y[test_index]
