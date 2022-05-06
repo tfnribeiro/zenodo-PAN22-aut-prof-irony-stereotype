@@ -98,7 +98,23 @@ if os.path.isfile("profanity_counts.csv"):
 else:
     profanity_features = get_features(X, profanity_embeds, "All Data")
     np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",", fmt='%f')
-    
+
+def predict(list_authors, classifier):
+    pos_features = get_features(list_authors, pos_counts, "Individual Predict")
+    count_features = get_features(list_authors, author_style_counts, "Individual Predict")
+    lix_features = get_features(list_authors, lix_score, "Individual Predict")
+    sent_features = get_features(list_authors, get_sent_polarity, "Individual Predict")
+    sep_punct_features = get_features(list_authors, count_punctuation, "Individual Predict")
+    miss_features = get_features(list_authors, misspelled, "Individual Predict").reshape((-1,1))
+    emoji_features = get_features(list_authors, emoji_embeds, "Individual Predict")
+    profanity_features = get_features(list_authors, profanity_embeds, "Individual Predict")
+
+    emoji_features = emoji_pca.transform(emoji_features)
+    profanity_features = profanity_pca.transform(profanity_features)
+
+    x = np.concatenate((count_features, pos_features, lix_features, emoji_features, sent_features, sep_punct_features, miss_features, profanity_features), axis=1)
+    return classifier.predict(x)
+
 #emoji_pca = PCA(n_components=5) 
 #emoji_features = emoji_pca.fit_transform(emoji_features)
 #profanity_pca = SparsePCA(n_components=10)
@@ -133,18 +149,20 @@ kf = KFold(n_splits=7)
 emoji_pca_n = 5 
 profanity_components = 10
 
+emoji_pca = SparsePCA(n_components=emoji_pca_n)
+profanity_pca = SparsePCA(n_components=profanity_components) 
+
 print(f"Performing Cross-Validation...")
 for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     print("Train: ", len(train_index), "Test: ", len(test_index))
-    emoji_pca = SparsePCA(n_components=emoji_pca_n) 
+    
     print("Performing Emoji-PCA")
     emoji_features_train = emoji_pca.fit_transform(emoji_features[train_index,:])
     emoji_features_test = emoji_pca.transform(emoji_features[test_index,:])
 
-    profanity_pca = SparsePCA(n_components=profanity_components)
     print("Performing Profanity-PCA")
-    profanity_features_train = profanity_pca.fit_transform(emoji_features[train_index,:])
-    profanity_features_test = profanity_pca.transform(emoji_features[test_index,:])
+    profanity_features_train = profanity_pca.fit_transform(profanity_features[train_index,:])
+    profanity_features_test = profanity_pca.transform(profanity_features[test_index,:])
 
     X_train=  np.concatenate((count_features[train_index,:],pos_features[train_index,:], lix_features[train_index,:], 
         emoji_features_train, sent_features[train_index,:], sep_punct_features[train_index,:], miss_features[train_index,:], profanity_features_train), axis=1)
@@ -281,6 +299,8 @@ print("SVM (F1-Score) W.Averages: ", f1_svm_list.mean(axis=0))
 #print(X_train_features[y_train_all=="NI",:].mean(axis=0))
 #print("Train I Averages: ")
 #print(X_train_features[y_train_all=="I",:].mean(axis=0))
+
+
 
 """
 
