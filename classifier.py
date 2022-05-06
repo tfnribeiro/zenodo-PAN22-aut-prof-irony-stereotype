@@ -43,6 +43,7 @@ else:
 
 #author style
 if os.path.isfile("author_style_counts.csv"):
+    print(get_author_style_labels())
     count_features = np.loadtxt("author_style_counts.csv", delimiter=",")
 else:
     count_features = get_features(X, author_style_counts, "All Data")

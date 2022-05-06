@@ -12,13 +12,29 @@ np.set_printoptions(suppress=True)
 """
 Calculates a number of different counts per tweet and generates the following features:
 
-[auth_vocabsize, type_token_rt, author_word_length_avg,
+[auth_vocabsize_avg, type_token_rt, author_word_length_avg,
   avg_tweet_length, author_hashtag_count,
   author_usertag_count, author_urltag_count, 
   author_avg_emoji, avg_capital_lower_ratio]
   
 """
-def author_style_counts(author_tweet_list):
+author_style_feature_dict = {
+    "avg_auth_vocabsize":0,
+    "type_token_rt":0,
+    "author_word_length_avg":0,
+    "avg_tweet_length":0,
+    "avg_author_hashtag_count":0,
+    "avg_author_usertag_count":0, 
+    "avg_author_urltag_count":0, 
+    "avg_author_emoji_count":0, 
+    "avg_capital_lower_ratio":0
+}
+
+
+def get_author_style_labels(filter_keys=[]):
+    return [k for k in author_style_feature_dict.keys() if k not in filter_keys]
+
+def author_style_counts(author_tweet_list, filter_keys=[]):
     author_vocab = set()
     author_tweet_length = 0
     avg_author_word_length = 0
@@ -53,18 +69,20 @@ def author_style_counts(author_tweet_list):
         else:
             author_total_capital_lower_ratio += tweet_capital_letters/tweet_lowercase_letters
 
-    avg_tweet_length = author_tweet_length/len(author_tweet_list)
-    author_avg_emoji = author_total_emoji/len(author_tweet_list)
-    avg_author_word_length = avg_author_word_length/author_total_word_count
-    type_token_rt = len(author_vocab)/author_total_word_count
-    auth_vocabsize = len(author_vocab)
-    avg_capital_lower_ratio = author_total_capital_lower_ratio/len(author_tweet_list)
-    avg_author_hashtag_count = author_hashtag_count/len(author_tweet_list)
-    avg_author_usertag_count = author_usertag_count/len(author_tweet_list)
-    avg_author_urltag_count = author_urltag_count/len(author_tweet_list)
-    
-    return np.array([auth_vocabsize, type_token_rt, avg_author_word_length, avg_tweet_length, avg_author_hashtag_count, avg_author_usertag_count, 
-    avg_author_urltag_count, author_avg_emoji, avg_capital_lower_ratio])
+    author_features = copy_dictionary(author_style_feature_dict)
+    author_features["avg_auth_vocabsize"] = author_vocab/len(author_tweet_list)
+    author_features["type_token_rt"] = len(author_vocab)/author_total_word_count
+    author_features["author_word_length_avg"] = avg_author_word_length/author_total_word_count
+    author_features["avg_tweet_length"] = author_tweet_length/len(author_tweet_list)
+    author_features["avg_author_hashtag_count"] = author_hashtag_count/len(author_tweet_list)
+    author_features["avg_author_usertag_count"] = author_usertag_count/len(author_tweet_list)
+    author_features["avg_author_urltag_count"] = author_urltag_count/len(author_tweet_list)
+    author_features["avg_author_emoji_count"] = author_total_emoji/len(author_tweet_list)
+    author_features["avg_capital_lower_ratio"] = author_total_capital_lower_ratio/len(author_tweet_list)
+
+    author_features = filter_dictionary(author_features, filter_keys)
+
+    return np.array(list(author_features.values()))
 
 def emoji_embeds(author_tweet_list):
     emoji_counts = {k:0 for k in emoji.UNICODE_EMOJI['en'].keys()}
@@ -78,7 +96,6 @@ def emoji_embeds(author_tweet_list):
 def profanity_embeds(author_tweet_list):
     author_tweet_list = np.char.lower(author_tweet_list) #lowercase
     author_tweet_list = np.char.strip(author_tweet_list, string.punctuation) #stripping
-
 
     prof_list = [word.rstrip() for word in open('profanity_list.txt', 'r', encoding= 'utf-8').readlines()]
     count_array = np.full((len(prof_list)), 0)

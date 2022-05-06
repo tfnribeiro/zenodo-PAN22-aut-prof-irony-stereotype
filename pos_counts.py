@@ -22,22 +22,30 @@ VERB 	verb 	    is, say, told, given, playing, would
 X 	other 	ersatz, esprit, dunno, gr8, univeristy
 
 """
-def pos_counts(author_tweet_list):
-    pos_dict = {
-        "ADJ":0,
-        "ADP":0,
-        "ADV":0,
-        "CONJ":0,
-        "DET":0,
-        "NOUN":0,
-        "NUM":0,
-        "PRT":0,
-        "PRON":0,
-        "VERB":0,
-        ".":0,
-        "X":0
-    }
+pos_dict = {
+    "ADJ":0,
+    "ADP":0,
+    "ADV":0,
+    "CONJ":0,
+    "DET":0,
+    "NOUN":0,
+    "NUM":0,
+    "PRT":0,
+    "PRON":0,
+    "VERB":0,
+    ".":0,
+    "X":0
+}
+
+def get_pos_labels(filter_keys=[]):
+    return [k for k in pos_dict.keys() if k not in filter_keys]
+
+def pos_counts(author_tweet_list, filter_keys=[]):
+    author_pos_dict = copy_dictionary(pos_dict)
     for tweet in author_tweet_list:
         for word, tag in pos_tag(tokenize_tweet(tweet, True), tagset='universal'):
-            pos_dict[tag] += 1
-    return np.array(list(pos_dict.values()))/len(author_tweet_list)
+            author_pos_dict[tag] += 1
+
+    author_pos_dict = filter_dictionary(author_pos_dict, filter_keys)
+
+    return np.array(list(author_pos_dict.values()))/len(author_tweet_list)
