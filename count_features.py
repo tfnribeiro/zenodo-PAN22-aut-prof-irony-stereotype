@@ -98,7 +98,7 @@ def profanity_embeds(author_tweet_list):
     author_tweet_list = np.char.strip(author_tweet_list, string.punctuation) #stripping
 
     prof_list = [word.rstrip() for word in open('profanity_list.txt', 'r', encoding= 'utf-8').readlines()]
-    count_array = np.full((len(prof_list)), 0)
+    rel_count_array = np.full((len(prof_list)), 0)
 
     freq = FreqDist()
     stemmer = PorterStemmer()
@@ -106,11 +106,12 @@ def profanity_embeds(author_tweet_list):
         for word in word_tokenize(tweet):
             word = stemmer.stem(word)
             freq[word] += 1
+    total_words = sum(freq.values())
     profanity = set(prof_list).intersection(set(freq.keys()))
     for word in profanity:
-        count_array[prof_list.index(word)] = freq[word]
+        rel_count_array[prof_list.index(word)] = freq[word]/total_words
 
-    return count_array
+    return rel_count_array
 
 
 
