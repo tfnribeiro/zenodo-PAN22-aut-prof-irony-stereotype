@@ -20,7 +20,7 @@ import os
 
 np.random.seed(0)
 
-def get_features(dataset, function, label="", report_per_cent=50):
+def get_features(dataset, function, label=""):
     list_features = []
     print(f"Processing features: {function.__name__}")
     for i in tqdm(range(len(dataset))):
@@ -182,10 +182,10 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     print(f"Test Ratio of Labels (split: {i+1}): I: {ratio_test_i} | NI:{ratio_test_ni}")
     #X_train, X_test, y_train, y_test = train_test_split(list_features, y, test_size=0.3)
 
-    clf = RandomForestClassifier()
-    clf.fit(X_train, y_train)
-    y_train_pred = clf.predict(X_train)
-    y_test_pred = clf.predict(X_test)
+    clf_rfc = RandomForestClassifier()
+    clf_rfc.fit(X_train, y_train)
+    y_train_pred = clf_rfc.predict(X_train)
+    y_test_pred = clf_rfc.predict(X_test)
 
     acc_train = np.sum(y_train_pred == y_train) / len(y_train)
     acc_test = np.sum(y_test_pred == y_test) / len(y_test)
@@ -299,7 +299,6 @@ print("SVM (F1-Score) W.Averages: ", f1_svm_list.mean(axis=0))
 #print(X_train_features[y_train_all=="NI",:].mean(axis=0))
 #print("Train I Averages: ")
 #print(X_train_features[y_train_all=="I",:].mean(axis=0))
-
 
 
 """

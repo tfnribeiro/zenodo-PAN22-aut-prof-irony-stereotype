@@ -70,7 +70,7 @@ def author_style_counts(author_tweet_list, filter_keys=[]):
             author_total_capital_lower_ratio += tweet_capital_letters/tweet_lowercase_letters
 
     author_features = copy_dictionary(author_style_feature_dict)
-    author_features["avg_auth_vocabsize"] = author_vocab/len(author_tweet_list)
+    author_features["avg_auth_vocabsize"] = len(author_vocab)/len(author_tweet_list)
     author_features["type_token_rt"] = len(author_vocab)/author_total_word_count
     author_features["author_word_length_avg"] = avg_author_word_length/author_total_word_count
     author_features["avg_tweet_length"] = author_tweet_length/len(author_tweet_list)
