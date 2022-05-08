@@ -91,10 +91,12 @@ def emoji_embeds(author_tweet_list):
         for c in tweet:
             if c in emoji_counts:
                 emoji_counts[c] += 1
-    return np.array(list(emoji_counts.values()))
+    total_emojis = sum(emoji_counts.values())
+    if total_emojis == 0:
+        return np.array(list(emoji_counts.values()))/1
+    return np.array(list(emoji_counts.values()))/total_emojis
 
 def profanity_embeds(author_tweet_list):
-    print('Hello!')
     author_tweet_list = np.char.lower(author_tweet_list) #lowercase
     author_tweet_list = np.char.strip(author_tweet_list, string.punctuation) #stripping
 
@@ -109,11 +111,11 @@ def profanity_embeds(author_tweet_list):
             freq[word] += 1
     total_words = sum(freq.values())
     profanity = set(prof_list).intersection(set(freq.keys()))
-    print(profanity)
     for word in profanity:
-        rel_count_array[prof_list.index(word)] = freq[word]/total_words
-        print(freq[word], freq[word]/total_words)
-
+        if total_words == 0:
+            rel_count_array[prof_list.index(word)] = freq[word]/1
+        else:
+            rel_count_array[prof_list.index(word)] = freq[word]/total_words
     return rel_count_array
 
 
