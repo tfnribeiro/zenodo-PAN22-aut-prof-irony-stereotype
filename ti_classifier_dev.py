@@ -20,7 +20,7 @@ from tqdm import tqdm
 import pandas as pd
 import os 
 
-np.random.seed(0)
+np.random.seed(1)
 
 def get_features(dataset, function, label="", supress_print=False):
     list_features = []
@@ -60,7 +60,7 @@ for tweet_author_i in range(len(X_train_n200)):
 X_new = np.array(X_new)
 y_new = np.array(y_new)
 
-X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_new, y_new, test_size=0.1)
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_new, y_new, test_size=0.01)
 
 #Cache the Values for the test set
 #pos
@@ -152,7 +152,7 @@ def predict(list_authors, classifier):
 #
 emoji_pca_n = 5 
 profanity_components = 10
-word_pca_n = 15
+word_pca_n = 20
 #
 emoji_pca = PCA(n_components=emoji_pca_n)
 profanity_pca = PCA(n_components=profanity_components)
@@ -174,7 +174,7 @@ profanity_tfidf_features = get_features(X_train_all, profanity_tfidf.tf_idf, "Pr
 words_tfidf = fit_word_embeds_tfidf(X_train_all)
 words_tfidf_features = get_features(X_train_all, words_tfidf.tf_idf, "Words TF_IDF")
 
-X_train_all_features = words_tfidf_features
+X_train_all_features = profanity_tfidf_features
 
 #
 #feature_df = pd.DataFrame(np.concatenate((USERCODE_X.reshape((-1,1)),X_train_features,y.reshape((-1,1))),axis=1), columns=["input_file", "auth_vocabsize","type_token_rt","avg_author_word_length",
@@ -199,7 +199,7 @@ f1_five_nn_list = []
 f1_log_reg_list = []
 f1_svm_list = []
 # KFold validation to pick the best classifier
-kf = KFold(n_splits=5)
+kf = KFold(n_splits=7)
 
 print(f"Performing Cross-Validation...")
 for i, (train_index, test_index) in tqdm(enumerate(kf.split(X_train_all_features))):
@@ -211,13 +211,13 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X_train_all_features
     print("Performing Profanity-PCA")
     profanity_features_train = profanity_pca.fit_transform(profanity_tfidf_features[train_index,:])
     profanity_features_test = profanity_pca.transform(profanity_tfidf_features[test_index,:])
-    print("Performing Profanity-PCA")
+    print("Performing Word-PCA")
     word_features_train = word_pca.fit_transform(words_tfidf_features[train_index,:])
     word_features_test = word_pca.transform(words_tfidf_features[test_index,:])
 
-    X_train=  word_features_train
+    X_train=  np.concatenate((emoji_features_train, profanity_features_train, word_features_train),axis=1)
     
-    X_test = word_features_test
+    X_test = np.concatenate((emoji_features_test, profanity_features_test, word_features_test),axis=1)
 
     y_train, y_test = y_train_all[train_index], y_train_all[test_index]
 
