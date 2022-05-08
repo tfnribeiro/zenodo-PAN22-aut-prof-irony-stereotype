@@ -4,8 +4,11 @@ import numpy as np
 from nltk import FreqDist
 from nltk import word_tokenize
 import string
+
+from sqlalchemy import true
 from utils import *
 from nltk.stem.porter import *
+from tfidf import *
 
 
 np.set_printoptions(suppress=True)
@@ -29,6 +32,7 @@ author_style_feature_dict = {
     "avg_author_emoji_count":0, 
     "avg_capital_lower_ratio":0
 }
+
 
 
 def get_author_style_labels(filter_keys=[]):
@@ -95,6 +99,19 @@ def emoji_embeds(author_tweet_list):
     if total_emojis == 0:
         return np.array(list(emoji_counts.values()))/1
     return np.array(list(emoji_counts.values()))/total_emojis
+
+def fit_emoji_embeds_tfidf(train_data):
+    emoji_tfidf = tfidf(train_data, terms_filter=set(emoji.UNICODE_EMOJI['en'].keys()))
+    return emoji_tfidf
+
+def fit_word_embeds_tfidf(train_data):
+    word_tfidf = tfidf(train_data)
+    return word_tfidf
+
+def fit_profanity_embeds_tfidf(train_data):
+    prof_list = [word.rstrip() for word in open('profanity_list.txt', 'r', encoding= 'utf-8').readlines()]
+    prof_tfidf = tfidf(train_data, terms_filter=set(prof_list), lowercase=True)
+    return prof_tfidf
 
 def profanity_embeds(author_tweet_list):
     author_tweet_list = np.char.lower(author_tweet_list) #lowercase

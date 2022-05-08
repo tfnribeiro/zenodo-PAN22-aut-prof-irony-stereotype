@@ -44,7 +44,7 @@ X_train_n200, X_test_n200, y_train_n200, y_test_n200 = train_test_split(X, y, te
 # Split the Train data into a 20% Test dataset
 X_new = []
 y_new = []
-split_size = 100
+split_size = 200
 
 
 for tweet_author_i in range(len(X_train_n200)):
@@ -64,7 +64,7 @@ X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_new, y_new
 
 #Cache the Values for the test set
 #pos
-REGEN_FEATURES = True
+REGEN_FEATURES = False
 
 if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
     pos_features = np.loadtxt("pos_features.csv", delimiter=",")
@@ -152,19 +152,29 @@ def predict(list_authors, classifier):
 #
 emoji_pca_n = 5 
 profanity_components = 10
+#
+emoji_pca = PCA(n_components=emoji_pca_n)
+profanity_pca = PCA(n_components=profanity_components) 
+#
+#print("Performing Emoji-PCA")
+#emoji_features_train = emoji_pca.fit_transform(emoji_features)
+#emoji_features_test = emoji_pca.transform(emoji_features)
+#print("Performing Profanity-PCA")
+#profanity_features_train = profanity_pca.fit_transform(profanity_features)
+#profanity_features_test = profanity_pca.transform(profanity_features)
+emoji_tfidf = fit_emoji_embeds_tfidf(X_train_all)
+emoji_tfidf_features = get_features(X_train_all, emoji_tfidf.tf_idf, "Emoji TF_IDF")
 
-emoji_pca = SparsePCA(n_components=emoji_pca_n)
-profanity_pca = SparsePCA(n_components=profanity_components) 
+profanity_tfidf = fit_profanity_embeds_tfidf(X_train_all)
+profanity_tfidf_features = get_features(X_train_all, profanity_tfidf.tf_idf, "Profanity TF_IDF")
 
-print("Performing Emoji-PCA")
-emoji_features_train = emoji_pca.fit_transform(emoji_features)
-emoji_features_test = emoji_pca.transform(emoji_features)
-print("Performing Profanity-PCA")
-profanity_features_train = profanity_pca.fit_transform(profanity_features)
-profanity_features_test = profanity_pca.transform(profanity_features)
+#emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
+words_tfidf = fit_word_embeds_tfidf(X_train_all)
+words_tfidf_features = get_features(X_train_all, profanity_tfidf.tf_idf, "Words TF_IDF")
 
-X_train_all_features =  np.concatenate((count_features,pos_features, lix_features, 
-        emoji_features_train, sent_features, sep_punct_features, profanity_features_train), axis=1)#
+X_train_all_features = words_tfidf_features
+
+#
 #feature_df = pd.DataFrame(np.concatenate((USERCODE_X.reshape((-1,1)),X_train_features,y.reshape((-1,1))),axis=1), columns=["input_file", "auth_vocabsize","type_token_rt","avg_author_word_length",
 #"avg_tweet_length","avg_author_hashtag_count","avg_author_usertag_count","avg_author_urltag_count",
 #"author_avg_emoji","avg_capital_lower_ratio","ADJ","ADP","ADV","CONJ","DET","NOUN","NUM","PRT","PRON","VERB",
@@ -194,18 +204,15 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X_train_all_features
     print("Train: ", len(train_index), "Test: ", len(test_index))
     
     print("Performing Emoji-PCA")
-    emoji_features_train = emoji_pca.fit_transform(emoji_features[train_index,:])
-    emoji_features_test = emoji_pca.transform(emoji_features[test_index,:])
-
+    emoji_features_train = emoji_pca.fit_transform(emoji_tfidf_features[train_index,:])
+    emoji_features_test = emoji_pca.transform(emoji_tfidf_features[test_index,:])
     print("Performing Profanity-PCA")
-    profanity_features_train = profanity_pca.fit_transform(profanity_features[train_index,:])
-    profanity_features_test = profanity_pca.transform(profanity_features[test_index,:])
+    profanity_features_train = profanity_pca.fit_transform(profanity_tfidf_features[train_index,:])
+    profanity_features_test = profanity_pca.transform(profanity_tfidf_features[test_index,:])
 
-    X_train=  np.concatenate((count_features[train_index,:],pos_features[train_index,:], lix_features[train_index,:], 
-        emoji_features_train, sent_features[train_index,:], sep_punct_features[train_index,:], profanity_features_train), axis=1)
+    X_train=  words_tfidf_features[train_index,:]
     
-    X_test = np.concatenate((count_features[test_index,:],pos_features[test_index,:], lix_features[test_index,:], 
-        emoji_features_test, sent_features[test_index,:], sep_punct_features[test_index,:], profanity_features_test), axis=1)
+    X_test = words_tfidf_features[test_index,:]
 
     y_train, y_test = y_train_all[train_index], y_train_all[test_index]
 
@@ -346,11 +353,11 @@ print("SVM (F1-Score) W.Averages: ", f1_svm_list.mean(axis=0))
 #print("Train I Averages: ")
 #print(X_train_features[y_train_all=="I",:].mean(axis=0))
 
-clf_rfc = RandomForestClassifier()
-clf_rfc.fit(X_train_all_features, y_train_all)
-
-y_test_pred, _ = predict(X_test_all, clf_rfc)
-print("W. F1-Score (Unseen data Splitted): ", f1_score(y_test_pred, y_test_all, average='weighted'))
+#clf_rfc = RandomForestClassifier()
+#clf_rfc.fit(X_train_all_features, y_train_all)
+#
+#y_test_pred, _ = predict(X_test_all, clf_rfc)
+#print("W. F1-Score (Unseen data Splitted): ", f1_score(y_test_pred, y_test_all, average='weighted'))
 
 def test_predictions(classfier, n_sentences=50):
     test_sentences = n_sentences
@@ -376,15 +383,15 @@ def test_predictions(classfier, n_sentences=50):
     print(f"Final F1-Score (n=={n_sentences}): {current_f1_score}")
     return predictions==labels, predictions, labels
 
-acc_list_10, pred, labels = test_predictions(clf_rfc, 10)
-acc_list_20, pred, labels = test_predictions(clf_rfc, 20)
-acc_list_50, pred, labels = test_predictions(clf_rfc)
-acc_list_75, pred, labels = test_predictions(clf_rfc, 75)
+#acc_list_10, pred, labels = test_predictions(clf_rfc, 10)
+#acc_list_20, pred, labels = test_predictions(clf_rfc, 20)
+#acc_list_50, pred, labels = test_predictions(clf_rfc)
+#acc_list_75, pred, labels = test_predictions(clf_rfc, 75)
 
 #print(acc_list_75.sum()/len(acc_list_75))
 
-all_data_pred, all_data_prob = predict(X_test_n200, clf_rfc)
-print("W. F1-Score (Unseen Full): ", f1_score(all_data_pred, y_test_n200,average='weighted'))
+#all_data_pred, all_data_prob = predict(X_test_n200, clf_rfc)
+#print("W. F1-Score (Unseen Full): ", f1_score(all_data_pred, y_test_n200,average='weighted'))
 
 def train_predict(train, train_labels, test):
     pos_features = get_features(train, pos_counts, "Individual Predict", supress_print=True)
@@ -421,7 +428,7 @@ def train_predict(train, train_labels, test):
 
     return classifier.predict(x_test), classifier.predict_proba(x_test)
 
-all_data_pred, all_data_prob = train_predict(X_train_n200, y_train_n200, X_test_n200)
-print("W. F1-Score (Unseen Full), Trained on full: ", f1_score(all_data_pred, y_test_n200,average='weighted'))
+#all_data_pred, all_data_prob = train_predict(X_train_n200, y_train_n200, X_test_n200)
+#print("W. F1-Score (Unseen Full), Trained on full: ", f1_score(all_data_pred, y_test_n200,average='weighted'))
 """
 """
