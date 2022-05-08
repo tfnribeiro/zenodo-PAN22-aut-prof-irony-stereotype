@@ -152,9 +152,11 @@ def predict(list_authors, classifier):
 #
 emoji_pca_n = 5 
 profanity_components = 10
+word_pca_n = 15
 #
 emoji_pca = PCA(n_components=emoji_pca_n)
-profanity_pca = PCA(n_components=profanity_components) 
+profanity_pca = PCA(n_components=profanity_components)
+word_pca = PCA(n_components=word_pca_n)  
 #
 #print("Performing Emoji-PCA")
 #emoji_features_train = emoji_pca.fit_transform(emoji_features)
@@ -170,7 +172,7 @@ profanity_tfidf_features = get_features(X_train_all, profanity_tfidf.tf_idf, "Pr
 
 #emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
 words_tfidf = fit_word_embeds_tfidf(X_train_all)
-words_tfidf_features = get_features(X_train_all, profanity_tfidf.tf_idf, "Words TF_IDF")
+words_tfidf_features = get_features(X_train_all, words_tfidf.tf_idf, "Words TF_IDF")
 
 X_train_all_features = words_tfidf_features
 
@@ -209,10 +211,13 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X_train_all_features
     print("Performing Profanity-PCA")
     profanity_features_train = profanity_pca.fit_transform(profanity_tfidf_features[train_index,:])
     profanity_features_test = profanity_pca.transform(profanity_tfidf_features[test_index,:])
+    print("Performing Profanity-PCA")
+    word_features_train = word_pca.fit_transform(words_tfidf_features[train_index,:])
+    word_features_test = word_pca.transform(words_tfidf_features[test_index,:])
 
-    X_train=  words_tfidf_features[train_index,:]
+    X_train=  word_features_train
     
-    X_test = words_tfidf_features[test_index,:]
+    X_test = word_features_test
 
     y_train, y_test = y_train_all[train_index], y_train_all[test_index]
 

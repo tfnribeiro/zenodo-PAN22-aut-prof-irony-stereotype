@@ -105,7 +105,7 @@ def fit_emoji_embeds_tfidf(train_data):
     return emoji_tfidf
 
 def fit_word_embeds_tfidf(train_data):
-    word_tfidf = tfidf(train_data)
+    word_tfidf = tfidf(train_data, lowercase=True, authors_document=False)
     return word_tfidf
 
 def fit_profanity_embeds_tfidf(train_data):
