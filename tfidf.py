@@ -13,14 +13,17 @@ class tfidf:
         # Get terms in corpus:
         # Number of terms found
         self.idf_terms = dict()
-        # Documents == N of Tweets
-        if authors_document:
+        
+        self.authors_document = authors_document
+        if self.authors_document:
+            # Documents == N of Authors
             self.n_documents = len(corpus)
         else:
+            # Documents == N of Tweets
             self.n_documents = 0
         self.n_terms = 0
         for author in corpus:
-            if not authors_document:
+            if not self.authors_document:
                 self.n_documents += len(author)
             for tweet in author:
                 for w in set(tokenize_tweet(tweet, as_list=True)):
@@ -43,9 +46,9 @@ class tfidf:
                 for w in set(tokenize_tweet(tweet, as_list=True)):
                     if w in self.idf_terms:
                         self.idf_matrix[document_i, self.idf_terms[w]] = True
-                if not authors_document:
+                if not self.authors_document:
                     document_i += 1
-            if authors_document:
+            if self.authors_document:
                 document_i += 1
         
         # 1 x d
@@ -54,15 +57,25 @@ class tfidf:
     def tf(self, author):
         if self.lowercase:
             author = np.char.lower(author)
-        tf_matrix = np.zeros((len(author), len(self.idf_terms.keys())), dtype="int16")
-        for doc_i, tweet in enumerate(author):
-            for w in tokenize_tweet(tweet, as_list=True):
-                if w in self.idf_terms:
-                    index = self.idf_terms[w]
-                    tf_matrix[doc_i, index] += 1
-                else:
-                    continue
-            tf_matrix[doc_i, :]/(tf_matrix[doc_i,:].sum()+1)
+        if self.authors_document:
+            tf_matrix = np.zeros((1, len(self.idf_terms.keys())), dtype="int16")
+            for tweet in author:
+                for w in tokenize_tweet(tweet, as_list=True):
+                    if w in self.idf_terms:
+                        index = self.idf_terms[w]
+                        tf_matrix[0, index] += 1
+                    else:
+                        continue
+        else:
+            tf_matrix = np.zeros((len(author), len(self.idf_terms.keys())), dtype="int16")
+            for doc_i, tweet in enumerate(author):
+                for w in tokenize_tweet(tweet, as_list=True):
+                    if w in self.idf_terms:
+                        index = self.idf_terms[w]
+                        tf_matrix[doc_i, index] += 1
+                    else:
+                        continue
+        tf_matrix = tf_matrix/(tf_matrix.sum(axis=0)+1)
         return tf_matrix
     
     def tf_idf(self, author):
