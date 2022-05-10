@@ -30,18 +30,19 @@ def get_features(dataset, function, label=""):
     return np.array(list_features)
 
 # Split the Train data into a 20% Test dataset
-X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.25)
+X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X, y, test_size=0.3)
 
 #Cache the Values for the test set
 #pos
-if os.path.isfile("pos_features.csv"):
+REGEN_FEATURES  = True
+if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
     pos_features = np.loadtxt("pos_features.csv", delimiter=",")
 else:
     pos_features = get_features(X, pos_counts, "All Data")
     np.savetxt("pos_features.csv", pos_features, delimiter=",", fmt='%f')
 
 #author style
-if os.path.isfile("author_style_counts.csv"):
+if not REGEN_FEATURES and os.path.isfile("author_style_counts.csv"):
     print(get_author_style_labels())
     count_features = np.loadtxt("author_style_counts.csv", delimiter=",")
 else:
@@ -49,44 +50,43 @@ else:
     np.savetxt("author_style_counts.csv", count_features, delimiter=",", fmt='%f')    
 
 #lix
-if os.path.isfile("lix_score.csv"):
+if not REGEN_FEATURES and os.path.isfile("lix_score.csv"):
     lix_features = np.loadtxt("lix_score.csv", delimiter=",").reshape((-1,1))
 else:
     lix_features = get_features(X, lix_score, "All Data")
     np.savetxt("lix_score.csv", lix_features, delimiter=",", fmt='%f')
 
 #punctuation
-if os.path.isfile("punct_score.csv"):
+if not REGEN_FEATURES and os.path.isfile("punct_score.csv"):
     punct_features = np.loadtxt("punct_score.csv", delimiter=",")
 else:
     punct_features = get_features(X, count_punctuation, "All Data")
     np.savetxt("punct_score.csv", punct_features, delimiter=",", fmt='%f')
 
 #seperated pronunciation
-if os.path.isfile("sep_punct_score.csv"):
+if not REGEN_FEATURES and os.path.isfile("sep_punct_score.csv"):
     sep_punct_features = np.loadtxt("sep_punct_score.csv", delimiter=",")
 else:
     sep_punct_features = get_features(X, seperated_punctuation, "All Data")
     np.savetxt("sep_punct_score.csv", sep_punct_features, delimiter=",", fmt='%f')
 
 #emoji features
-if os.path.isfile("emoji_features.csv"):
+if not REGEN_FEATURES and os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
 else:
     emoji_features = get_features(X, emoji_embeds, "All Data")
     np.savetxt("emoji_features.csv",  emoji_features, delimiter=",", fmt='%f')
     
 #sentence polarity
-if os.path.isfile("get_sent_polarity.csv"):
+if not REGEN_FEATURES and os.path.isfile("get_sent_polarity.csv"):
     sent_features = np.loadtxt("get_sent_polarity.csv", delimiter=",")
 else:
     sent_features = get_features(X, get_sent_polarity, "All Data")
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",", fmt='%f')
 
 #profanity
-if os.path.isfile("profanity_counts.csv"):
-    profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
-    
+if not REGEN_FEATURES and os.path.isfile("profanity_counts.csv"):
+    profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")    
 else:
     profanity_features = get_features(X, profanity_embeds, "All Data")
     np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",", fmt='%f')

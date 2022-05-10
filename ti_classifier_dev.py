@@ -44,7 +44,7 @@ X_train_n200, X_test_n200, y_train_n200, y_test_n200 = train_test_split(X, y, te
 # Split the Train data into a 20% Test dataset
 X_new = []
 y_new = []
-split_size = 50
+split_size = 200
 
 for tweet_author_i in range(len(X_train_n200)):
     start = 0
@@ -63,12 +63,12 @@ X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_new, y_new
 
 #Cache the Values for the test set
 #pos
-REGEN_FEATURES = False
+REGEN_FEATURES = True
 
 if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
     pos_features = np.loadtxt("pos_features.csv", delimiter=",")
 else:
-    pos_features = get_features(X_train_all, pos_counts, "All Data")
+    pos_features = get_features(X, pos_counts, "All Data")
     np.savetxt("pos_features.csv", pos_features, delimiter=",", fmt='%f')
 
 #author style
@@ -76,57 +76,56 @@ if not REGEN_FEATURES and os.path.isfile("author_style_counts.csv"):
     print(get_author_style_labels())
     count_features = np.loadtxt("author_style_counts.csv", delimiter=",")
 else:
-    count_features = get_features(X_train_all, author_style_counts, "All Data")
+    count_features = get_features(X, author_style_counts, "All Data")
     np.savetxt("author_style_counts.csv", count_features, delimiter=",", fmt='%f')    
 
 #lix
 if not REGEN_FEATURES and os.path.isfile("lix_score.csv"):
     lix_features = np.loadtxt("lix_score.csv", delimiter=",").reshape((-1,1))
 else:
-    lix_features = get_features(X_train_all, lix_score, "All Data")
+    lix_features = get_features(X, lix_score, "All Data")
     np.savetxt("lix_score.csv", lix_features, delimiter=",", fmt='%f')
 
 #punctuation
 if not REGEN_FEATURES and os.path.isfile("punct_score.csv"):
     punct_features = np.loadtxt("punct_score.csv", delimiter=",")
 else:
-    punct_features = get_features(X_train_all, count_punctuation, "All Data")
+    punct_features = get_features(X, count_punctuation, "All Data")
     np.savetxt("punct_score.csv", punct_features, delimiter=",", fmt='%f')
 
 #seperated pronunciation
 if not REGEN_FEATURES and os.path.isfile("sep_punct_score.csv"):
     sep_punct_features = np.loadtxt("sep_punct_score.csv", delimiter=",")
 else:
-    sep_punct_features = get_features(X_train_all, seperated_punctuation, "All Data")
+    sep_punct_features = get_features(X, seperated_punctuation, "All Data")
     np.savetxt("sep_punct_score.csv", sep_punct_features, delimiter=",", fmt='%f')
 
 #missspelling
 if not REGEN_FEATURES and os.path.isfile("misspelled.csv"):
     miss_features = np.loadtxt("misspelled.csv", delimiter=",").reshape((-1,1))
 else:
-    miss_features = get_features(X_train_all, misspelled, "All Data").reshape((-1,1))
+    miss_features = get_features(X, misspelled, "All Data").reshape((-1,1))
     np.savetxt("misspelled.csv", miss_features, delimiter=",", fmt='%f')
 
 #emoji features
 if not REGEN_FEATURES and os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
 else:
-    emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
+    emoji_features = get_features(X, emoji_embeds, "All Data")
     np.savetxt("emoji_features.csv",  emoji_features, delimiter=",", fmt='%f')
     
 #sentence polarity
 if not REGEN_FEATURES and os.path.isfile("get_sent_polarity.csv"):
     sent_features = np.loadtxt("get_sent_polarity.csv", delimiter=",")
 else:
-    sent_features = get_features(X_train_all, get_sent_polarity, "All Data")
+    sent_features = get_features(X, get_sent_polarity, "All Data")
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",", fmt='%f')
 
 #profanity
 if not REGEN_FEATURES and os.path.isfile("profanity_counts.csv"):
     profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
-    
 else:
-    profanity_features = get_features(X_train_all, profanity_embeds, "All Data")
+    profanity_features = get_features(X, profanity_embeds, "All Data")
     np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",", fmt='%f')
 
 def predict(list_authors, classifier):
@@ -165,15 +164,15 @@ word_pca = PCA(n_components=word_pca_n)
 #print("Performing Profanity-PCA")
 #profanity_features_train = profanity_pca.fit_transform(profanity_features)
 #profanity_features_test = profanity_pca.transform(profanity_features)
-emoji_tfidf = fit_emoji_embeds_tfidf(X_train_all)
-emoji_tfidf_features = get_features(X_train_all, emoji_tfidf.tf_idf, "Emoji TF_IDF")
+emoji_tfidf = fit_emoji_embeds_tfidf(X)
+emoji_tfidf_features = get_features(X, emoji_tfidf.tf_idf, "Emoji TF_IDF")
 
-profanity_tfidf = fit_profanity_embeds_tfidf(X_train_all)
-profanity_tfidf_features = get_features(X_train_all, profanity_tfidf.tf_idf, "Profanity TF_IDF")
+profanity_tfidf = fit_profanity_embeds_tfidf(X)
+profanity_tfidf_features = get_features(X, profanity_tfidf.tf_idf, "Profanity TF_IDF")
 
 #emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
-words_tfidf = fit_word_embeds_tfidf(X_train_all)
-words_tfidf_features = get_features(X_train_all, words_tfidf.tf_idf, "Words TF_IDF")
+words_tfidf = fit_word_embeds_tfidf(X)
+words_tfidf_features = get_features(X, words_tfidf.tf_idf, "Words TF_IDF")
 
 X_train_all_features = profanity_tfidf_features
 
@@ -203,7 +202,7 @@ f1_svm_list = []
 kf = KFold(n_splits=7)
 
 print(f"Performing Cross-Validation...")
-for i, (train_index, test_index) in tqdm(enumerate(kf.split(X_train_all_features))):
+for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     print("Train: ", len(train_index), "Test: ", len(test_index))
     
     print("Performing Emoji-PCA")
@@ -216,11 +215,11 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X_train_all_features
     word_features_train = word_pca.fit_transform(words_tfidf_features[train_index,:])
     word_features_test = word_pca.transform(words_tfidf_features[test_index,:])
 
-    X_train=  np.concatenate((emoji_features_train, profanity_features_train, word_features_train),axis=1)
+    X_train=  np.concatenate((pos_features[train_index,:], count_features[train_index,:], sent_features[train_index,:], sep_punct_features[train_index,:], emoji_features_train, profanity_features_train, word_features_train), axis=1)
     
-    X_test = np.concatenate((emoji_features_test, profanity_features_test, word_features_test),axis=1)
+    X_test = np.concatenate((pos_features[test_index,:], count_features[test_index,:], sent_features[test_index,:], sep_punct_features[test_index,:], emoji_features_test, profanity_features_test, word_features_test), axis=1)
 
-    y_train, y_test = y_train_all[train_index], y_train_all[test_index]
+    y_train, y_test = y[train_index], y[test_index]
 
     print(X_train.shape)
 
