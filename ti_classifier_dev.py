@@ -44,7 +44,7 @@ X_train_n200, X_test_n200, y_train_n200, y_test_n200 = train_test_split(X, y, te
 # Split the Train data into a 20% Test dataset
 X_new = []
 y_new = []
-split_size = 200
+split_size = 50
 
 for tweet_author_i in range(len(X_train_n200)):
     start = 0
@@ -63,11 +63,11 @@ X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_new, y_new
 
 #Cache the Values for the test set
 #pos
-REGEN_FEATURES = True
+REGEN_FEATURES = False
 
-emoji_pca_n = 5 
-profanity_components = 10
-word_pca_n = 20
+emoji_pca_n = 50
+profanity_components = 50
+word_pca_n = 100
 #
 emoji_pca = PCA(n_components=emoji_pca_n)
 profanity_pca = PCA(n_components=profanity_components)
@@ -217,9 +217,9 @@ for i, (train_index, test_index) in tqdm(enumerate(kf.split(X))):
     word_features_train = word_pca.fit_transform(words_tfidf_features[train_index,:])
     word_features_test = word_pca.transform(words_tfidf_features[test_index,:])
 
-    X_train=  np.concatenate((pos_features[train_index,:], count_features[train_index,:], sent_features[train_index,:], sep_punct_features[train_index,:], emoji_features_train, profanity_features_train, word_features_train), axis=1)
+    X_train=  np.concatenate((emoji_features_train, profanity_features_train, word_features_train), axis=1)
     
-    X_test = np.concatenate((pos_features[test_index,:], count_features[test_index,:], sent_features[test_index,:], sep_punct_features[test_index,:], emoji_features_test, profanity_features_test, word_features_test), axis=1)
+    X_test = np.concatenate((emoji_features_test, profanity_features_test, word_features_test), axis=1)
 
     y_train, y_test = y[train_index], y[test_index]
 
@@ -390,12 +390,14 @@ def test_predictions(classfier, n_sentences=50):
     print(f"Final F1-Score (n=={n_sentences}): {current_f1_score}")
     return predictions==labels, predictions, labels
 
-acc_list_10, pred, labels = test_predictions(pipe, 10)
-acc_list_20, pred, labels = test_predictions(pipe, 20)
-acc_list_50, pred, labels = test_predictions(pipe)
+random_f_in_small_batch = RandomForestClassifier()
+random_f_in_small_batch.fit(X_train_all)
+acc_list_10, pred, labels = test_predictions(random_f_in_small_batch, 10)
+acc_list_20, pred, labels = test_predictions(random_f_in_small_batch, 20)
+acc_list_50, pred, labels = test_predictions(random_f_in_small_batch)
 #acc_list_75, pred, labels = test_predictions(clf_rfc, 75)
 
-all_data_pred, all_data_prob = predict(X_test_n200, pipe)
+all_data_pred, all_data_prob = predict(X_test_n200, random_f_in_small_batch)
 print("W. F1-Score (Unseen Full): ", f1_score(all_data_pred, y_test_n200,average='weighted'))
 
 def train_predict(train, train_labels, test, classifier_class):

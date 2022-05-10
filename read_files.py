@@ -30,7 +30,7 @@ def get_representation_tweets(F):
     #HERE YOU SHOULD PROCESS THOSE TWEETS AND RETURN THE REPRESENTATION
     return texts
 
-GT    = path.join(DATA_HOME, "truth.txt")
+GT = path.join(DATA_HOME, "truth.txt")
 true_values = {}
 f=open(GT)
 for line in f:

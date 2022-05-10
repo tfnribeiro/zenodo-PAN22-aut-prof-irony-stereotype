@@ -1,6 +1,9 @@
 # zenodo-PAN22-aut-prof-irony-stereotype
  PAN 22 Author Profiling: Profiling Irony and Stereotype Spreaders on Twitter (IROSTEREO)
 
+### Link to Task:
+https://pan.webis.de/clef22/pan22-web/author-profiling.html
+
 ## Features Used:
 - Pos/Neg Polarity Counts (Threshold Defined beforehand) ✅
 - Vocab Size - Tiago ✅
