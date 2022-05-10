@@ -20,7 +20,7 @@ from tqdm import tqdm
 import pandas as pd
 import os 
 
-np.random.seed(1)
+np.random.seed(0)
 
 def get_features(dataset, function, label="", supress_print=False):
     list_features = []
@@ -65,6 +65,30 @@ X_train_all, X_test_all, y_train_all, y_test_all = train_test_split(X_new, y_new
 #pos
 REGEN_FEATURES = True
 
+emoji_pca_n = 5 
+profanity_components = 10
+word_pca_n = 20
+#
+emoji_pca = PCA(n_components=emoji_pca_n)
+profanity_pca = PCA(n_components=profanity_components)
+word_pca = PCA(n_components=word_pca_n)  
+#
+#print("Performing Emoji-PCA")
+#emoji_features_train = emoji_pca.fit_transform(emoji_features)
+#emoji_features_test = emoji_pca.transform(emoji_features)
+#print("Performing Profanity-PCA")
+#profanity_features_train = profanity_pca.fit_transform(profanity_features)
+#profanity_features_test = profanity_pca.transform(profanity_features)
+emoji_tfidf = fit_emoji_embeds_tfidf(X)
+emoji_tfidf_features = get_features(X, emoji_tfidf.tf_idf, "Emoji TF_IDF")
+
+profanity_tfidf = fit_profanity_embeds_tfidf(X)
+profanity_tfidf_features = get_features(X, profanity_tfidf.tf_idf, "Profanity TF_IDF")
+
+#emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
+words_tfidf = fit_word_embeds_tfidf(X)
+words_tfidf_features = get_features(X, words_tfidf.tf_idf, "Words TF_IDF")
+
 if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
     pos_features = np.loadtxt("pos_features.csv", delimiter=",")
 else:
@@ -108,7 +132,7 @@ else:
     np.savetxt("misspelled.csv", miss_features, delimiter=",", fmt='%f')
 
 #emoji features
-if not REGEN_FEATURES and os.path.isfile("emoji_features.csv"):
+if REGEN_FEATURES and os.path.isfile("emoji_features.csv"):
     emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
 else:
     emoji_features = get_features(X, emoji_embeds, "All Data")
@@ -122,7 +146,7 @@ else:
     np.savetxt("get_sent_polarity.csv", sent_features, delimiter=",", fmt='%f')
 
 #profanity
-if not REGEN_FEATURES and os.path.isfile("profanity_counts.csv"):
+if REGEN_FEATURES and os.path.isfile("profanity_counts.csv"):
     profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
 else:
     profanity_features = get_features(X, profanity_embeds, "All Data")
@@ -150,29 +174,7 @@ def predict(list_authors, classifier):
 #profanity_pca = SparsePCA(n_components=10)
 #profanity_features = profanity_pca.fit_transform(profanity_features)
 #
-emoji_pca_n = 5 
-profanity_components = 10
-word_pca_n = 20
-#
-emoji_pca = PCA(n_components=emoji_pca_n)
-profanity_pca = PCA(n_components=profanity_components)
-word_pca = PCA(n_components=word_pca_n)  
-#
-#print("Performing Emoji-PCA")
-#emoji_features_train = emoji_pca.fit_transform(emoji_features)
-#emoji_features_test = emoji_pca.transform(emoji_features)
-#print("Performing Profanity-PCA")
-#profanity_features_train = profanity_pca.fit_transform(profanity_features)
-#profanity_features_test = profanity_pca.transform(profanity_features)
-emoji_tfidf = fit_emoji_embeds_tfidf(X)
-emoji_tfidf_features = get_features(X, emoji_tfidf.tf_idf, "Emoji TF_IDF")
 
-profanity_tfidf = fit_profanity_embeds_tfidf(X)
-profanity_tfidf_features = get_features(X, profanity_tfidf.tf_idf, "Profanity TF_IDF")
-
-#emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
-words_tfidf = fit_word_embeds_tfidf(X)
-words_tfidf_features = get_features(X, words_tfidf.tf_idf, "Words TF_IDF")
 
 X_train_all_features = profanity_tfidf_features
 
