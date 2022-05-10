@@ -91,24 +91,11 @@ def generate_features_train_predict(train, train_labels, test, classifier_class=
 
     print(label)
 
-    x_train = get_features_train(train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", supress_prints_flag=False):
+    x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", supress_prints_flag=False)
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
 
-    pos_features = get_features(test, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
-    count_features = get_features(test, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
-    lix_features = get_features(test, lix_score, "Individual Predict", supress_print=supress_prints_flag)
-    sent_features = get_features(test, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(test, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
-    #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
-    emoji_tfidf_features = get_features(test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
-    profanity_tfidf_features = get_features(test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
-    words_tfidf_features = get_features(test, words_tfidf.tf_idf, "Words TF_IDF", supress_print=supress_prints_flag)
-    emoji_features_test = emoji_pca.transform(emoji_tfidf_features)
-    profanity_features_test = profanity_pca.transform(profanity_tfidf_features)
-    word_features_test = word_pca.transform(words_tfidf_features)
-
-    x_test = np.concatenate((pos_features, count_features, sent_features, sep_punct_features, lix_features, emoji_features_test, profanity_features_test, word_features_test), axis=1)
+    x_test = get_features_test(test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
 
     return classifier.predict(x_test), classifier.predict(x_train), classifier.predict_proba(x_test)
 
@@ -337,7 +324,7 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
         if log_cls:
             pipe_log = make_pipeline(StandardScaler(), LogisticRegression())
             pipe_log.fit(X_train, y_train)
-            y_test_pred, y_train_pred x= pipe_log.predict(X_test), pipe_log.predict(X_train)
+            y_test_pred, y_train_pred = pipe_log.predict(X_test), pipe_log.predict(X_train)
             
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
