@@ -100,17 +100,17 @@ def emoji_embeds(author_tweet_list):
         return np.array(list(emoji_counts.values()))/1
     return np.array(list(emoji_counts.values()))/total_emojis
 
-def fit_emoji_embeds_tfidf(train_data):
-    emoji_tfidf = tfidf(train_data, terms_filter=set(emoji.UNICODE_EMOJI['en'].keys()), authors_document=False)
+def fit_emoji_embeds_tfidf(train_data, author_documents_flag=False):
+    emoji_tfidf = tfidf(train_data, terms_filter=set(emoji.UNICODE_EMOJI['en'].keys()), authors_document=author_documents_flag)
     return emoji_tfidf
 
-def fit_word_embeds_tfidf(train_data):
-    word_tfidf = tfidf(train_data, lowercase=True, authors_document=False)
+def fit_word_embeds_tfidf(train_data, lower_case_flag=True, authors_document=False):
+    word_tfidf = tfidf(train_data, lowercase=lower_case_flag, authors_document=authors_document)
     return word_tfidf
 
-def fit_profanity_embeds_tfidf(train_data):
+def fit_profanity_embeds_tfidf(train_data, lower_case_flag=True, authors_document=False):
     prof_list = [word.rstrip() for word in open('profanity_list.txt', 'r', encoding= 'utf-8').readlines()]
-    prof_tfidf = tfidf(train_data, terms_filter=set(prof_list), lowercase=True, authors_document=False)
+    prof_tfidf = tfidf(train_data, terms_filter=set(prof_list), lowercase=lower_case_flag, authors_document=authors_document)
     return prof_tfidf
 
 def profanity_embeds(author_tweet_list):

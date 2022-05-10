@@ -33,17 +33,31 @@ def get_features(dataset, function, label="", supress_print=False):
             list_features.append(get_features)
         print(f"{label} Processing for features: {function.__name__}, is complete!")
     return np.array(list_features)
-
-def train_predict(train, train_labels, test, classifier_class=RandomForestClassifier(), emoji_pca_dim = 5, 
-    profanity_pca_dim = 10, word_pca_dim = 20, label="", supress_prints_flag=False):
-
-    print(label)
+def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, supress_prints_flag=False):
     
-    pos_features = get_features(train, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
-    count_features = get_features(train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
-    lix_features = get_features(train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
-    sent_features = get_features(train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    pos_features = get_features(author_list_test, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
+    count_features = get_features(author_list_test, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
+    lix_features = get_features(author_list_test, lix_score, "Individual Predict", supress_print=supress_prints_flag)
+    sent_features = get_features(author_list_test, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(author_list_test, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
+    emoji_tfidf_features = get_features(author_list_test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
+    profanity_tfidf_features = get_features(author_list_test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
+    words_tfidf_features = get_features(author_list_test, words_tfidf.tf_idf, "Words TF_IDF", supress_print=supress_prints_flag)
+    emoji_features_test = emoji_pca.transform(emoji_tfidf_features)
+    profanity_features_test = profanity_pca.transform(profanity_tfidf_features)
+    word_features_test = word_pca.transform(words_tfidf_features)
+
+    x_test = np.concatenate((pos_features, count_features, sent_features, sep_punct_features, lix_features, emoji_features_test, profanity_features_test, word_features_test), axis=1)
+
+    return x_test
+
+def get_features_train(author_list_train, emoji_pca_dim = 5, profanity_pca_dim = 10, word_pca_dim = 20, label="", supress_prints_flag=False):
+    pos_features = get_features(author_list_train, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
+    count_features = get_features(author_list_train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
+    lix_features = get_features(author_list_train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
+    sent_features = get_features(author_list_train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(author_list_train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
     #miss_features = get_features(train, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     #emoji_features = get_features(train, emoji_embeds, "Individual Predict", supress_print=True)
     #profanity_features = get_features(train, profanity_embeds, "Individual Predict", supress_print=True)
@@ -53,16 +67,16 @@ def train_predict(train, train_labels, test, classifier_class=RandomForestClassi
 
     emoji_pca = PCA(n_components=emoji_pca_n)
     profanity_pca = PCA(n_components=profanity_pca_n)
-    word_pca = PCA(n_components=word_pca_n)  
-    emoji_tfidf = fit_emoji_embeds_tfidf(train)
-    emoji_tfidf_features = get_features(train, emoji_tfidf.tf_idf, "Emoji TF_IDF")
+    word_pca = PCA(n_components=word_pca_n)
 
-    profanity_tfidf = fit_profanity_embeds_tfidf(train)
-    profanity_tfidf_features = get_features(train, profanity_tfidf.tf_idf, "Profanity TF_IDF")
+    emoji_tfidf = fit_emoji_embeds_tfidf(author_list_train)
+    emoji_tfidf_features = get_features(author_list_train, emoji_tfidf.tf_idf, "Emoji TF_IDF")
 
-    #emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
-    words_tfidf = fit_word_embeds_tfidf(train)
-    words_tfidf_features = get_features(train, words_tfidf.tf_idf, "Words TF_IDF")
+    profanity_tfidf = fit_profanity_embeds_tfidf(author_list_train)
+    profanity_tfidf_features = get_features(author_list_train, profanity_tfidf.tf_idf, "Profanity TF_IDF")
+
+    words_tfidf = fit_word_embeds_tfidf(author_list_train)
+    words_tfidf_features = get_features(author_list_train, words_tfidf.tf_idf, "Words TF_IDF")
 
     emoji_features_train = emoji_pca.fit_transform(emoji_tfidf_features)
     profanity_features_train = profanity_pca.fit_transform(profanity_tfidf_features)
@@ -70,6 +84,14 @@ def train_predict(train, train_labels, test, classifier_class=RandomForestClassi
 
     x_train = np.concatenate((pos_features, count_features, sent_features, sep_punct_features, lix_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
 
+    return x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
+
+def generate_features_train_predict(train, train_labels, test, classifier_class=RandomForestClassifier(), emoji_pca_dim = 5, 
+    profanity_pca_dim = 10, word_pca_dim = 20, label="", supress_prints_flag=False):
+
+    print(label)
+
+    x_train = get_features_train(train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", supress_prints_flag=False):
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
 
@@ -100,9 +122,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     lix_features = get_features(train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
     sep_punct_features = get_features(train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
-    #miss_features = get_features(train, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
-    #emoji_features = get_features(train, emoji_embeds, "Individual Predict", supress_print=True)
-    #profanity_features = get_features(train, profanity_embeds, "Individual Predict", supress_print=True)
+
     emoji_pca_n = emoji_pca_dim 
     profanity_pca_n = profanity_pca_dim
     word_pca_n = word_pca_dim
@@ -132,6 +152,8 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     classifier.fit(x_train, train_labels)
     
     return classifier, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
+
+
 
 def cache_features(REGEN_FEATURES=False):
     if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
@@ -240,6 +262,8 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
         
         y_train, y_test = y[train_index], y[test_index]
 
+        X_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X_train,label="Generating Train Features")
+        X_test = get_features_test(X_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
         ratio_train_i = (y_train == "I").sum()/len(y_train)
         ratio_train_ni = (y_train == "NI").sum()/len(y_train)
 
@@ -251,7 +275,8 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
 
         if rdmforest:
             clf_rfc = RandomForestClassifier()
-            y_test_pred, y_train_pred, _ = train_predict(X_train, y_train, X_test, clf_rfc, label="Random Forest Test")
+            clf_rfc.fit(X_train, y_train)
+            y_test_pred, y_train_pred = clf_rfc.predict(X_test), clf_rfc.predict(X_train)
 
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
@@ -264,7 +289,8 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
         
         if one_nn:
             clf_nn1 = KNeighborsClassifier(n_neighbors=1)
-            y_test_pred, y_train_pred, _ = train_predict(X_train, y_train, X_test, clf_nn1, label="1-NN")
+            clf_nn1.fit(X_train, y_train)
+            y_test_pred, y_train_pred = clf_nn1.predict(X_test), clf_nn1.predict(X_train)
 
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
@@ -275,7 +301,8 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
         
         if three_nn:
             clf_nn3 = KNeighborsClassifier(n_neighbors=3)
-            y_test_pred, y_train_pred, _ = train_predict(X_train, y_train, X_test, clf_nn3, label="3-NN")
+            clf_nn3.fit(X_train, y_train)
+            y_test_pred, y_train_pred = clf_nn3.predict(X_test), clf_nn3.predict(X_train)
 
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
@@ -286,7 +313,8 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
 
         if five_nn:
             clf_nn5 = KNeighborsClassifier(n_neighbors=5)
-            y_test_pred, y_train_pred, _ = train_predict(X_train, y_train, X_test, clf_nn5, label="5-NN")
+            clf_nn5.fit(X_train, y_train)
+            y_test_pred, y_train_pred = clf_nn5.predict(X_test), clf_nn5.predict(X_train)
 
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
@@ -297,7 +325,8 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
         
         if svm_cls:
             pipe_svm = make_pipeline(StandardScaler(), svm.SVC(gamma="auto"))
-            y_test_pred, y_train_pred, _ = train_predict(X_train, y_train, X_test, pipe_svm, label="SVM")
+            pipe_svm.fit(X_train, y_train)
+            y_test_pred, y_train_pred = pipe_svm.predict(X_test), pipe_svm.predict(X_train)
 
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
@@ -306,8 +335,10 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
             f1_svm_list.append(f1_score(y_test, y_test_pred,average='weighted'))
         
         if log_cls:
-            pipe = make_pipeline(StandardScaler(), LogisticRegression())
-            y_test_pred, y_train_pred, _ = train_predict(X_train, y_train, X_test, pipe_svm, label="Log Reg")
+            pipe_log = make_pipeline(StandardScaler(), LogisticRegression())
+            pipe_log.fit(X_train, y_train)
+            y_test_pred, y_train_pred x= pipe_log.predict(X_test), pipe_log.predict(X_train)
+            
             acc_train = np.sum(y_train_pred == y_train) / len(y_train)
             acc_test = np.sum(y_test_pred == y_test) / len(y_test)
             log_reg_list.append((acc_train,acc_test))
@@ -352,11 +383,13 @@ def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
 def print_dictionaries_cross_validate(dict_acc, dict_f1, number_of_split):
     print(f"Printing values for n=={number_of_split}")
     for key in dict_acc.keys():
-        print(f"Average acc, for {key}: {dict_acc[key].mean(axis=0)}")
+        print(f"Average acc,           for {key}: {dict_acc[key].mean(axis=0)}")
         print(f"Average F1 (Weighted), for {key}: {dict_f1[key].mean(axis=0)}")
 
 cross_val_acc_dict_7, cross_val_f1_dict_7 = cross_validate(7)
 cross_val_acc_dict_5, cross_val_f1_dict_5 = cross_validate(5)
+cross_val_acc_dict_3, cross_val_f1_dict_3 = cross_validate(3)
 
 print_dictionaries_cross_validate(cross_val_acc_dict_7, cross_val_f1_dict_7, 7)
 print_dictionaries_cross_validate(cross_val_acc_dict_5, cross_val_f1_dict_5, 5)
+print_dictionaries_cross_validate(cross_val_acc_dict_3, cross_val_f1_dict_3, 3)
