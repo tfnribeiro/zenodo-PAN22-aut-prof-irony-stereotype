@@ -52,7 +52,7 @@ class tfidf:
                 document_i += 1
         
         # 1 x d
-        self.term_idf = np.log2(self.n_documents / (1+np.sum(self.idf_matrix, axis=0)))
+        self.term_idf = np.log2(self.n_documents / (np.sum(self.idf_matrix, axis=0)))
 
     def tf(self, author):
         if self.lowercase:

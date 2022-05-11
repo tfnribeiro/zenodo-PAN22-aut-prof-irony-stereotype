@@ -17,7 +17,8 @@ from tqdm import tqdm
 import pandas as pd
 import os 
 
-np.random.seed(0)
+np.random.seed(1)
+
 def get_features(dataset, function, label="", supress_print=False):
     list_features = []
     if supress_print:
@@ -33,8 +34,9 @@ def get_features(dataset, function, label="", supress_print=False):
             list_features.append(get_features)
         print(f"{label} Processing for features: {function.__name__}, is complete!")
     return np.array(list_features)
-def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, supress_prints_flag=False):
-    
+
+def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, label="Generating Test Features", supress_prints_flag=False):
+    print(label)
     pos_features = get_features(author_list_test, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
     count_features = get_features(author_list_test, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(author_list_test, lix_score, "Individual Predict", supress_print=supress_prints_flag)
@@ -52,7 +54,9 @@ def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoj
 
     return x_test
 
-def get_features_train(author_list_train, emoji_pca_dim = 5, profanity_pca_dim = 10, word_pca_dim = 20, label="", supress_prints_flag=False):
+def get_features_train(author_list_train, emoji_pca_dim = 5, profanity_pca_dim = 10, word_pca_dim = 20, label="Generating Train Features", supress_prints_flag=False):
+    print(label)
+
     pos_features = get_features(author_list_train, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
     count_features = get_features(author_list_train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(author_list_train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
@@ -140,9 +144,15 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     
     return classifier, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
 
+def predict(test, classifier, emoji_pca, profanity_pca, word_pca, 
+    emoji_tfidf, profanity_tfidf, words_tfidf):
+
+    x_test = get_features_test(test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, supress_prints_flag=False)
+
+    return classifier.predict(x_test), classifier.predict_proba(x_test)
 
 
-def cache_features(REGEN_FEATURES=False):
+def cache_features(X, REGEN_FEATURES=False):
     if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
         pos_features = np.loadtxt("pos_features.csv", delimiter=",")
     else:
@@ -199,25 +209,6 @@ def cache_features(REGEN_FEATURES=False):
         profanity_features = get_features(X, profanity_embeds, "All Data")
         np.savetxt("profanity_counts.csv",  profanity_features, delimiter=",", fmt='%f')
 
-def predict(test, classifier, emoji_pca, profanity_pca, word_pca, 
-    emoji_tfidf, profanity_tfidf, words_tfidf):
-
-    pos_features = get_features(test, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
-    count_features = get_features(test, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
-    lix_features = get_features(test, lix_score, "Individual Predict", supress_print=supress_prints_flag)
-    sent_features = get_features(test, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(test, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
-    #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
-    emoji_tfidf_features = get_features(test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
-    profanity_tfidf_features = get_features(test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
-    words_tfidf_features = get_features(test, words_tfidf.tf_idf, "Words TF_IDF", supress_print=supress_prints_flag)
-    emoji_features_test = emoji_pca.transform(emoji_tfidf_features)
-    profanity_features_test = profanity_pca.transform(profanity_tfidf_features)
-    word_features_test = word_pca.transform(words_tfidf_features)
-
-    x_test = np.concatenate((pos_features, count_features, sent_features, sep_punct_features, lix_features, emoji_features_test, profanity_features_test, word_features_test), axis=1)
-
-    return classifier.predict(x_test), classifier.predict_proba(x_test)
 
 def cross_validate(split_n = 7, rdmforest=True, one_nn=True, three_nn=True,
     five_nn=True, log_cls=True, svm_cls=True):
