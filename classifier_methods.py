@@ -40,7 +40,7 @@ def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoj
     count_features = get_features(author_list_test, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(author_list_test, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(author_list_test, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(author_list_test, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(author_list_test, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
     #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     emoji_tfidf_features = get_features(author_list_test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
     profanity_tfidf_features = get_features(author_list_test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
@@ -60,7 +60,7 @@ def get_features_train(author_list_train, emoji_pca_dim = 5, profanity_pca_dim =
     count_features = get_features(author_list_train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(author_list_train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(author_list_train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(author_list_train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(author_list_train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
     #miss_features = get_features(train, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     #emoji_features = get_features(train, emoji_embeds, "Individual Predict", supress_print=True)
     #profanity_features = get_features(train, profanity_embeds, "Individual Predict", supress_print=True)
@@ -111,7 +111,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     count_features = get_features(train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
 
     emoji_pca_n = emoji_pca_dim 
     profanity_pca_n = profanity_pca_dim
@@ -177,8 +177,8 @@ def cache_features(X, REGEN_FEATURES=False):
     if not REGEN_FEATURES and os.path.isfile("punct_score.csv"):
         punct_features = np.loadtxt("punct_score.csv", delimiter=",")
     else:
-        punct_features = get_features(X, count_punctuation, "All Data")
-        np.savetxt("punct_score.csv", punct_features, delimiter=",", fmt='%f')
+        punct_features = get_features(X, seperated_punctuation, "All Data")
+        np.savetxt("sep_punct_score.csv", punct_features, delimiter=",", fmt='%f')
 
     #seperated pronunciation
     if not REGEN_FEATURES and os.path.isfile("sep_punct_score.csv"):
