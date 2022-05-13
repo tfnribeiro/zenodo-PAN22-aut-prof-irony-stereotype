@@ -41,7 +41,7 @@ def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoj
     count_features = get_features(author_list_test, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(author_list_test, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(author_list_test, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(author_list_test, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(author_list_test, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
     #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     emoji_tfidf_features = get_features(author_list_test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
     profanity_tfidf_features = get_features(author_list_test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
@@ -61,7 +61,7 @@ def get_features_train(author_list_train, emoji_pca_dim = 5, profanity_pca_dim =
     count_features = get_features(author_list_train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(author_list_train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(author_list_train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(author_list_train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(author_list_train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
     #miss_features = get_features(train, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     #emoji_features = get_features(train, emoji_embeds, "Individual Predict", supress_print=True)
     #profanity_features = get_features(train, profanity_embeds, "Individual Predict", supress_print=True)
@@ -112,7 +112,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     count_features = get_features(train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
     lix_features = get_features(train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
     sent_features = get_features(train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
-    sep_punct_features = get_features(train, count_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    sep_punct_features = get_features(train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
 
     emoji_pca_n = emoji_pca_dim 
     profanity_pca_n = profanity_pca_dim
@@ -178,8 +178,8 @@ def cache_features(X, REGEN_FEATURES=False):
     if not REGEN_FEATURES and os.path.isfile("punct_score.csv"):
         punct_features = np.loadtxt("punct_score.csv", delimiter=",")
     else:
-        punct_features = get_features(X, count_punctuation, "All Data")
-        np.savetxt("punct_score.csv", punct_features, delimiter=",", fmt='%f')
+        punct_features = get_features(X, seperated_punctuation, "All Data")
+        np.savetxt("sep_punct_score.csv", punct_features, delimiter=",", fmt='%f')
 
     #seperated pronunciation
     if not REGEN_FEATURES and os.path.isfile("sep_punct_score.csv"):
@@ -364,10 +364,11 @@ def print_dictionaries_cross_validate(dict_acc, dict_f1, number_of_split):
         print(f"Average acc,           for {key}: {dict_acc[key].mean(axis=0)}")
         print(f"Average F1 (Weighted), for {key}: {dict_f1[key].mean(axis=0)}")
 
-cross_val_acc_dict_7, cross_val_f1_dict_7 = cross_validate(7)
-cross_val_acc_dict_5, cross_val_f1_dict_5 = cross_validate(5)
-cross_val_acc_dict_3, cross_val_f1_dict_3 = cross_validate(3)
+if __name__ == "__main__":
+    cross_val_acc_dict_7, cross_val_f1_dict_7 = cross_validate(7)
+    cross_val_acc_dict_5, cross_val_f1_dict_5 = cross_validate(5)
+    cross_val_acc_dict_3, cross_val_f1_dict_3 = cross_validate(3)
 
-print_dictionaries_cross_validate(cross_val_acc_dict_7, cross_val_f1_dict_7, 7)
-print_dictionaries_cross_validate(cross_val_acc_dict_5, cross_val_f1_dict_5, 5)
-print_dictionaries_cross_validate(cross_val_acc_dict_3, cross_val_f1_dict_3, 3)
+    print_dictionaries_cross_validate(cross_val_acc_dict_7, cross_val_f1_dict_7, 7)
+    print_dictionaries_cross_validate(cross_val_acc_dict_5, cross_val_f1_dict_5, 5)
+    print_dictionaries_cross_validate(cross_val_acc_dict_3, cross_val_f1_dict_3, 3)

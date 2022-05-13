@@ -19,9 +19,9 @@ def seperated_punctuation(tweetlist):
         tweet = re.sub('(\.\.+|\?\?+|\!\!+)', '', tweet)
         
         ex = re.findall('\!', tweet)
-        pu = re.findall('\?', tweet)
+        qu = re.findall('\?', tweet)
         pe = re.findall('\.', tweet)
-        count_vector = count_vector + np.array([len(multex), len(multqu), len(multpe), len(quote), len(ex), len(pu), len(pe)])
+        count_vector = count_vector + np.array([len(multex), len(multqu), len(multpe), len(quote), len(ex), len(qu), len(pe)])
         
     #return array with the puctuation counts
     return count_vector
