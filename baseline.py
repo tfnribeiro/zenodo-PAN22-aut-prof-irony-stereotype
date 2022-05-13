@@ -28,7 +28,6 @@ def collect(array):
 
 def baseline_svm(data, labels, tokenize = 'char', kfold = 5):
 
-
     print("Tokenizing and vectorizing input...")
 
     if tokenize == 'word':
@@ -54,7 +53,9 @@ def baseline_svm(data, labels, tokenize = 'char', kfold = 5):
         prediction = clf.predict(X_test)
         print(f"Split {i} Accuracy: {accuracy_score(y_test, prediction)}")
         accuracies.append(prediction)
+        i+= 1
 
+    print(type(accuracies), type(accuracies[0]))
     print("Average accuracy:", sum(accuracies)/kfold)
 
 
