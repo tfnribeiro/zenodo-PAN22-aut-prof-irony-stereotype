@@ -1,6 +1,5 @@
 import numpy as np
 from utils import *
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 class tfidf:
     def __init__(self, corpus, terms_filter=None, lowercase=False, authors_document=False) -> None:

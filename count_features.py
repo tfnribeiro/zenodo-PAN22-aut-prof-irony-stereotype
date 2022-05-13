@@ -4,8 +4,6 @@ import numpy as np
 from nltk import FreqDist
 from nltk import word_tokenize
 import string
-
-from sqlalchemy import true
 from utils import *
 from nltk.stem.porter import *
 from tfidf import *
@@ -100,8 +98,8 @@ def emoji_embeds(author_tweet_list):
         return np.array(list(emoji_counts.values()))/1
     return np.array(list(emoji_counts.values()))/total_emojis
 
-def fit_emoji_embeds_tfidf(train_data, author_documents_flag=False):
-    emoji_tfidf = tfidf(train_data, terms_filter=set(emoji.UNICODE_EMOJI['en'].keys()), authors_document=author_documents_flag)
+def fit_emoji_embeds_tfidf(train_data, authors_document=False):
+    emoji_tfidf = tfidf(train_data, terms_filter=set(emoji.UNICODE_EMOJI['en'].keys()), authors_document=authors_document)
     return emoji_tfidf
 
 def fit_word_embeds_tfidf(train_data, lower_case_flag=True, authors_document=False):

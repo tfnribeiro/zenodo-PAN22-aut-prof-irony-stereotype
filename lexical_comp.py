@@ -11,20 +11,17 @@ https://en.wikipedia.org/wiki/Lix_(readability_test)
 https://readable.com/readability/lix-rix-readability-formulas/
 
 """
-def lix_score(author_tweet_list):
+def lix_score(author_tweet_list, long_words_t=7):
     total_LIX = 0
     for tweet in author_tweet_list:
         tokenized_tweet = tokenize_tweet(tweet, True)
-        long_words = len([w for w in tokenized_tweet if len(w) > 6])
+        long_words = len([w for w in tokenized_tweet if len(w) >= long_words_t])
         # |[A-Z][a-z]+
         # RegEx to find the ends of sentences 
-        reg_filter = regex.findall(r'[.;] |[.]\n', " ".join(tokenized_tweet))
+        reg_filter = regex.findall(r'[ ]+[.;?!]|[.;?!][ ]+|[.;?!]\n', " ".join(tokenized_tweet))
         periods = len(reg_filter)
         n_words = len(tokenized_tweet)
-        
         if n_words == 0:
-            print(tokenized_tweet)
-            print(n_words)
             n_words = 1
         if periods == 0:
             periods = 1

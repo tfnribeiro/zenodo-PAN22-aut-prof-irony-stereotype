@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from read_files import *
 import classifier_methods as cm
 
+
 def most_important_features(X_features, initial_feature_names):
     '''
     Takes the features and a list of feature names
@@ -51,7 +52,8 @@ if __name__ == "__main__":
     scaler = MinMaxScaler()
     fited = scaler.fit_transform(X_features)
     
-    feature_names = [ "ADJ","ADP","ADV","CONJ","DET","NOUN","NUM","PRT","PRON","VERB","PUNCT","UNK",
+    feature_names = [ 
+    "ADJ","ADP","ADV","CONJ","DET","NOUN","NUM","PRT","PRON","VERB","PUNCT","UNK",
     "auth_vocabsize","type_token_rt","avg_author_word_length","avg_tweet_length","avg_author_hashtag_count",
     "avg_author_usertag_count","avg_author_urltag_count","author_avg_emoji","avg_capital_lower_ratio",
     "pos", "neut", "neg", "compound",
@@ -62,7 +64,8 @@ if __name__ == "__main__":
     "profanity_pca_6","profanity_pca_7", "profanity_pca_8","profanity_pca_9","profanity_pca_10",
     "word_pca1","word_pca2","word_pca3", "word_pca4", "word_pca5", "word_pca6", "word_pca7", "word_pca8",
     "word_pca9", "word_pca10", "word_pca11", "word_pca12", "word_pca13", "word_pca14","word_pca15","word_pca16",
-    "word_pca17", "word_pca18" , "word_pca19", "word_pca20"]
+    "word_pca17", "word_pca18" , "word_pca19", "word_pca20"
+    ]
 
-    features = most_important_features(fited, feature_names)
+    features = most_important_features(X_features, feature_names)
     print(features)

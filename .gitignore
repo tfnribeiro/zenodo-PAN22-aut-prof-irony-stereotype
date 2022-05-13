@@ -1,6 +1,9 @@
 # Remove .csv cache files
 *.csv
 
+# OUTPUT 
+OUTPUT/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
