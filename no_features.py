@@ -1,20 +1,9 @@
-# Feature Extraction with PCA
-from tkinter import Y
-from classifier_methods import get_features_train
+from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-import pandas as pd
-from sklearn.decomposition import PCA, SparsePCA
+from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from read_files import *
-from pos_counts import *
-from count_features import *
-from lexical_comp import *
-from sent_polarity import *
-from read_files import *
-from punctuation import *
-from tqdm import tqdm
 import classifier_methods as cm
-
 
 def most_important_features(X_features, initial_feature_names):
     '''
@@ -45,7 +34,6 @@ def most_important_features(X_features, initial_feature_names):
     plt.show()
     '''
     
-    
     n_pcs= fit.components_.shape[0]
 
     # get the index of the most important feature on each component
@@ -60,7 +48,9 @@ def most_important_features(X_features, initial_feature_names):
 
 if __name__ == "__main__":
     X_features, _, _, _, _, _, _ = cm.get_features_train(X[:302])
-
+    scaler = MinMaxScaler()
+    fited = scaler.fit_transform(X_features)
+    
     feature_names = [ "ADJ","ADP","ADV","CONJ","DET","NOUN","NUM","PRT","PRON","VERB","PUNCT","UNK",
     "auth_vocabsize","type_token_rt","avg_author_word_length","avg_tweet_length","avg_author_hashtag_count",
     "avg_author_usertag_count","avg_author_urltag_count","author_avg_emoji","avg_capital_lower_ratio",
@@ -74,5 +64,5 @@ if __name__ == "__main__":
     "word_pca9", "word_pca10", "word_pca11", "word_pca12", "word_pca13", "word_pca14","word_pca15","word_pca16",
     "word_pca17", "word_pca18" , "word_pca19", "word_pca20"]
 
-    features = most_important_features(X_features, feature_names)
+    features = most_important_features(fited, feature_names)
     print(features)
