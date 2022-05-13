@@ -57,7 +57,7 @@ if __name__ == "__main__":
     "auth_vocabsize","type_token_rt","avg_author_word_length","avg_tweet_length","avg_author_hashtag_count",
     "avg_author_usertag_count","avg_author_urltag_count","author_avg_emoji","avg_capital_lower_ratio",
     "pos", "neut", "neg", "compound",
-    "exqu", "quex","mult-ex", "mult-qu", "mult-pe", "quote", "ex", "qu", "pe",
+    "mult-ex", "mult-qu", "mult-pe", "quote", "ex", "qu", "pe",
     "LiXScore",
     "emoji_pca_1", "emoji_pca_2", "emoji_pca_3", "emoji_pca_4", "emoji_pca_5",
     "profanity_pca_1", "profanity_pca_2", "profanity_pca_3", "profanity_pca_4", "profanity_pca_5", 
