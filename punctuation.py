@@ -24,7 +24,7 @@ def seperated_punctuation(tweetlist):
         count_vector = count_vector + np.array([len(multex), len(multqu), len(multpe), len(quote), len(ex), len(qu), len(pe)])
         
     #return array with the puctuation counts
-    return count_vector
+    return count_vector / tweetlist.shape[0]
 
 def count_punctuation(tweetlist):
     '''
