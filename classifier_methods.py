@@ -256,7 +256,7 @@ def cross_validate(X, y, split_n = 7, rdmforest=True, one_nn=True, three_nn=True
         X_test = get_features_test(X_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
 
         if rdmforest:
-            clf_rfc = RandomForestClassifier()
+            clf_rfc = RandomForestClassifier(min_samples_leaf=5)
             clf_rfc.fit(X_train, y_train)
             y_test_pred, y_train_pred = clf_rfc.predict(X_test), clf_rfc.predict(X_train)
 
@@ -371,22 +371,4 @@ def print_dictionaries_cross_validate(dict_acc, dict_f1, number_of_split):
     for key in dict_acc.keys():
         print(f"Average acc,           for {key}: {dict_acc[key].mean(axis=0)}")
         print(f"Average F1 (Weighted), for {key}: {dict_f1[key].mean(axis=0)}")
-
-X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
-#
-##X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
-#
-##x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
-#
-##generate_predictions_output(predictions, USERCODE_X, lang)
-#
-cross_val_acc_dict_9, cross_val_f1_dict_9= cross_validate(X, y, 9)
-cross_val_acc_dict_7, cross_val_f1_dict_7 = cross_validate(X, y, 7)
-cross_val_acc_dict_5, cross_val_f1_dict_5 = cross_validate(X, y, 5)
-cross_val_acc_dict_3, cross_val_f1_dict_3 = cross_validate(X, y, 3)
-
-print_dictionaries_cross_validate(cross_val_acc_dict_9, cross_val_f1_dict_9, 9)
-print_dictionaries_cross_validate(cross_val_acc_dict_7, cross_val_f1_dict_7, 7)
-print_dictionaries_cross_validate(cross_val_acc_dict_5, cross_val_f1_dict_5, 5)
-print_dictionaries_cross_validate(cross_val_acc_dict_3, cross_val_f1_dict_3, 3)
 
