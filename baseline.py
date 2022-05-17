@@ -52,11 +52,12 @@ def baseline_svm(data, labels, tokenize = 'char', kfold = 5):
         clf.fit(X_train, y_train)
         prediction = clf.predict(X_test)
         print(f"Split {i} Accuracy: {accuracy_score(y_test, prediction)}")
-        accuracies.append(prediction)
+        accuracies.append(accuracy_score(y_test, prediction))
         i+= 1
-
-    print(type(accuracies), type(accuracies[0]))
+    
     print("Average accuracy:", sum(accuracies)/kfold)
+
+    return prediction 
 
 
 
