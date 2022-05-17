@@ -3,19 +3,15 @@ from utils import *
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.80)
 #
 ##x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
 #
 ##generate_predictions_output(predictions, USERCODE_X, lang)
 # Emoji: 65, Profanity: 95,  Word: 255, 90% Variance (All X, this might not hold for different folds)
-predictions, *rest, classifier = generate_features_train_predict(X_train, y_train, X_test)
+# predictions, *rest, classifier = generate_features_train_predict(X_train, y_train, X_test)
 
-results = dict()
-emoji_n = 5
-profanity_n = 10
-for word_n in range(50, 100, 10):
-    results[(emoji_n,profanity_n, word_n)] = cross_validate(X_train, y_train, 5, emoji_pca_dim=emoji_n, profanity_pca_dim=profanity_n, word_pca_dim=word_n)
+acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X, y, 5, emoji_pca_dim=np.arange(5,10), profanity_pca_dim=np.arange(10,15), word_pca_dim=np.arange(20,110,20))
 
 
 # emoji_tfidf = fit_emoji_embeds_tfidf(
