@@ -6,18 +6,22 @@ import glob
 import re
 from xml.etree import ElementTree as ET
 from timeit import default_timer as timer
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 class stopwatch:
     def __init__(self):
         self.start = timer()
         self.last_split = None
+    def current_time(self):
+        time = datetime.now()
+        return time.strftime("%d/%m/%Y %H:%M:%S")
     def split(self, as_string=False):
         if self.last_split is None:
             self.last_split = timer()
-            current_split = self.last_split - self.start
-        current_split = timer() - self.last_split
-        self.last_split = timer()
+            current_split = timer() - self.start
+        else: 
+            current_split = timer() - self.last_split
+            self.last_split = timer()
         if as_string:
             return str(timedelta(seconds=current_split))
         return current_split

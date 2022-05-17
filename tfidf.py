@@ -14,6 +14,7 @@ class tfidf:
         self.idf_terms = dict()
         
         self.authors_document = authors_document
+        print("Generating IDF Vector")
         if self.authors_document:
             # Documents == N of Authors
             self.n_documents = len(corpus)
