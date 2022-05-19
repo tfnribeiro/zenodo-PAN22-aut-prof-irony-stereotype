@@ -1,5 +1,6 @@
 from classifier_methods import *
 from utils import * 
+import json
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
@@ -16,6 +17,28 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
 # 0.939157894736842 : Emoji_n:4 | Profanity_n:14 | Word_n:20
 
 acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X_train, y_train, 5, emoji_pca_dim=np.arange(2,11,2), profanity_pca_dim=np.arange(10,16,1), word_pca_dim=np.arange(10,26,5))
+
+# create json object from dictionary
+acc_dict_json = dict()
+for classifier in acc_dict.keys():
+    acc_dict_json[classifier] = dict()
+    for params in acc_dict[classifier].keys():
+        acc_dict_json[classifier][str(params)] = acc_dict[classifier][params].mean(axis=0)[1]
+
+f1_dict_json = dict()
+for classifier in f1_dict.keys():
+    f1_dict_json[classifier] = dict()
+    for params in f1_dict[classifier].keys():
+        f1_dict_json[classifier][str(params)] = f1_dict[classifier][params].mean()
+
+json_acc = json.dumps(acc_dict_json)
+json_f1 = json.dumps(f1_dict_json)
+
+with open("acc_search_value.json","w") as f:
+    f.write(json_acc)
+
+with open("f1_search_value.json","w") as f:
+    f.write(json_f1)
 
 predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=5, profanity_pca_dim=15, word_pca_dim=20, label="Test", supress_prints_flag=False)
 
