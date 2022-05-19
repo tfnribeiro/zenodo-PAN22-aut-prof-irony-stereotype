@@ -526,7 +526,8 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
                     ratio_test_ni = (y_test == "NI").sum()/len(y_test)
 
                     print(f"(split: {i+1}/{split_n}) Train: ",
-                        len(train_index), "Test: ", len(test_index))
+                        len(train_index), "Test: ", len(test_index), " | Params: ", (emoji_n, profanity_n, word_n))
+                    print(f"Best params so far: {best_e, best_p, best_w}")
                     print(train_index[:10])
                     print(test_index[:10])
                     if i > 0:
@@ -647,7 +648,9 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
                             currrent_max = avg_vals[1]
                             current_best_params = keys
                 best_e, best_p, best_w = current_best_params
-                print(f"Best Params (ACC) so far: Emoji_n:{best_e} | Profanity_n:{best_p} | Word_n:{best_w}")
+                print("------------------------------------------------------------------------------------------------------")
+                print(f"Best Params (ACC) so far - {currrent_max} : Emoji_n:{best_e} | Profanity_n:{best_p} | Word_n:{best_w}")
+                print("------------------------------------------------------------------------------------------------------")
     return acc_dict, f1_dict, best_e, best_p, best_w
 
 def print_dictionaries_cross_validate(dict_acc, dict_f1):

@@ -3,16 +3,23 @@ from utils import *
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
-#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.80)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
 #
 ##x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
 #
 ##generate_predictions_output(predictions, USERCODE_X, lang)
 # Emoji: 65, Profanity: 95,  Word: 255, 90% Variance (All X, this might not hold for different folds)
 # predictions, *rest, classifier = generate_features_train_predict(X_train, y_train, X_test)
+# Best Params (ACC) so far - 0.9353594389246055 : Emoji_n:5 | Profanity_n:9 | Word_n:10
+# Best Params (ACC) so far - 0.9318527177089422 : Emoji_n:10 | Profanity_n:10 | Word_n:10
+# Best Params (ACC) so far - 0.9338245614035088 : Emoji_n:10 | Profanity_n:15 | Word_n:15
+# 0.939157894736842 : Emoji_n:4 | Profanity_n:14 | Word_n:20
 
-acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X, y, 5, emoji_pca_dim=np.arange(5,10), profanity_pca_dim=np.arange(10,15), word_pca_dim=np.arange(20,110,20))
+acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X_train, y_train, 5, emoji_pca_dim=np.arange(2,11,2), profanity_pca_dim=np.arange(10,16,1), word_pca_dim=np.arange(10,26,5))
 
+predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=5, profanity_pca_dim=15, word_pca_dim=20, label="Test", supress_prints_flag=False)
+
+print("Acc: ", sum(predictions==y_test)/len(y_test))
 
 # emoji_tfidf = fit_emoji_embeds_tfidf(
 #     X, authors_document=False)
