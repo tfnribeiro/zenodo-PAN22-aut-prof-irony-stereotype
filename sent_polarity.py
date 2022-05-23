@@ -15,17 +15,17 @@ def get_sent_labels(filter_keys=[]):
 def get_sent_polarity(user_tweet_list, filter_keys=[]):
     sid = SentimentIntensityAnalyzer()
     author_sent_dict = copy_dictionary(sentiment_dict)
-    polarity_vec = np.zeros(4)
-    for tweet in user_tweet_list:
+    polarity_vec = np.zeros((len(user_tweet_list),4))
+    for tweet_i, tweet in enumerate(user_tweet_list):
         tweet = tokenize_tweet(tweet)
         sent_dict = sid.polarity_scores(tweet)
-        polarity_vec += np.array(list(sent_dict.values()))
+        polarity_vec[tweet_i,:] = np.array(list(sent_dict.values()))
     for i, k in enumerate(author_sent_dict.keys()):
         author_sent_dict[k] = polarity_vec[i]
 
     author_sent_dict = filter_dictionary(author_sent_dict, filter_keys)
 
-    return np.array(list(author_sent_dict.values()))/len(user_tweet_list)
+    return np.array(list(author_sent_dict.values())).std(axis=0)
 
 """
 Best Parameters:  (40, 0.01) Acc:  0.6666666666666666

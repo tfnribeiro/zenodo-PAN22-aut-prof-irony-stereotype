@@ -5,7 +5,7 @@ from utils import *
 from classifier_methods import *
 
 # https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
-np.random.seed(1)
+# np.random.seed(1)
 
 def evaluate(model, test_features, test_labels):
     predictions = model.predict(test_features)
@@ -18,7 +18,7 @@ def evaluate(model, test_features, test_labels):
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
-X_train_split, X_test_split, y_train, y_test = train_test_split(X,y,test_size=0.2) 
+X_train_split, X_test_split, y_train, y_test = train_test_split(X,y,test_size=0.3) 
 
 X_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X_train_split)
 
@@ -34,13 +34,13 @@ clf_rfc = RandomForestClassifier()
 param_grid = {
     'bootstrap': [True],
     'max_depth': np.arange(10,101,10),
-    'max_features': np.arange(2,7),
-    'min_samples_leaf': np.arange(2,6),
-    'min_samples_split': np.arange(4,17,4),
-    'n_estimators': np.arange(100,1001, 100)
+    'max_features': np.arange(1,10,2),
+    'min_samples_leaf': np.arange(1,10,2),
+    'min_samples_split': np.arange(1,10,2),
+    'n_estimators': np.arange(100,1001, 200)
 }
 
-grid_search = GridSearchCV(estimator = clf_rfc, param_grid = param_grid, cv = 4, n_jobs = -1, verbose = 1)
+grid_search = GridSearchCV(estimator = clf_rfc, param_grid = param_grid, cv = 5, n_jobs = 2, verbose = 2)
 grid_search.fit(X_train, y_train)
 print(grid_search.best_params_)
 

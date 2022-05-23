@@ -40,7 +40,7 @@ pos_dict = {
 def get_pos_labels(filter_keys=[]):
     return [k for k in pos_dict.keys() if k not in filter_keys]
 
-def pos_counts(author_tweet_list, filter_keys=[]):
+def pos_counts(author_tweet_list, filter_keys=["NOUN","X","."]):
     author_pos_dict = copy_dictionary(pos_dict)
     for tweet in author_tweet_list:
         for word, tag in pos_tag(tokenize_tweet(tweet, True), tagset='universal'):

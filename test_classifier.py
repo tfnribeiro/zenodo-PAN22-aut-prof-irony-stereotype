@@ -4,7 +4,7 @@ import json
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
 #
 ##x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
 #
@@ -16,38 +16,57 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10)
 # Best Params (ACC) so far - 0.9338245614035088 : Emoji_n:10 | Profanity_n:15 | Word_n:15
 # 0.939157894736842 : Emoji_n:4 | Profanity_n:14 | Word_n:20
 
-acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X_train, y_train, 5, emoji_pca_dim=np.arange(2,11,2), profanity_pca_dim=np.arange(10,16,1), word_pca_dim=np.arange(10,26,5))
+def tune_params():
+    acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X_train, y_train, 5, emoji_pca_dim=np.arange(2,5,2), profanity_pca_dim=np.arange(10,16,2), word_pca_dim=np.arange(15,26,5))
 
-# create json object from dictionary
-acc_dict_json = dict()
-for classifier in acc_dict.keys():
-    acc_dict_json[classifier] = dict()
-    for params in acc_dict[classifier].keys():
-        acc_dict_json[classifier][str(params)] = acc_dict[classifier][params].mean(axis=0)[1]
+    # create json object from dictionary
+    acc_dict_json = dict()
+    for classifier in acc_dict.keys():
+        acc_dict_json[classifier] = dict()
+        for params in acc_dict[classifier].keys():
+            acc_dict_json[classifier][str(params)] = acc_dict[classifier][params].mean(axis=0)[1]
 
-f1_dict_json = dict()
-for classifier in f1_dict.keys():
-    f1_dict_json[classifier] = dict()
-    for params in f1_dict[classifier].keys():
-        f1_dict_json[classifier][str(params)] = f1_dict[classifier][params].mean()
+    f1_dict_json = dict()
+    for classifier in f1_dict.keys():
+        f1_dict_json[classifier] = dict()
+        for params in f1_dict[classifier].keys():
+            f1_dict_json[classifier][str(params)] = f1_dict[classifier][params].mean()
 
-json_acc = json.dumps(acc_dict_json)
-json_f1 = json.dumps(f1_dict_json)
+    json_acc = json.dumps(acc_dict_json)
+    json_f1 = json.dumps(f1_dict_json)
 
-with open("acc_search_value.json","w") as f:
-    f.write(json_acc)
+    with open("acc_search_value.json","w") as f:
+        f.write(json_acc)
 
-with open("f1_search_value.json","w") as f:
-    f.write(json_f1)
+    with open("f1_search_value.json","w") as f:
+        f.write(json_f1)
 
-predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=5, profanity_pca_dim=15, word_pca_dim=20, label="Test", supress_prints_flag=False)
+    predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
 
-print("Acc: ", sum(predictions==y_test)/len(y_test))
+    print("Acc: ", sum(predictions==y_test)/len(y_test))
 
+acc, f1 = cross_validate(X_train, y_train)
+predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
+
+print(f1_score(y_test, predictions))
+"""
+With Std:
+
+With Mean:
+>>> acc['RandomForest'].mean(axis=0)
+array([1.        , 0.92559524])
+>>> acc['SVM'].mean(axis=0)
+array([0.97172619, 0.9077381 ])
+>>> acc['LogRegression'].mean(axis=0)
+array([0.97668651, 0.90178571])
+>>> (y_test == predictions).sum()/len(y_test)
+0.9166666666666666
+
+"""
 # emoji_tfidf = fit_emoji_embeds_tfidf(
 #     X, authors_document=False)
 # emoji_tfidf_features = get_features(
-#     X, emoji_tfidf.tf_idf, "Emoji TF_IDF")
+#     X, emoji_tfidf.tf_idf, "Emoji TF_IDF")a
 # profanity_tfidf = fit_profanity_embeds_tfidf(
 #     X, authors_document=False)
 # profanity_tfidf_features = get_features(
@@ -64,7 +83,7 @@ print("Acc: ", sum(predictions==y_test)/len(y_test))
 # 
 # for profanity_n in range(10, 106, 5):
 #     profanity_pca = PCA(n_components=profanity_n)
-#     profanity_features_train = profanity_pca.fit(
+#     profanity_features_train = profanity_pca.fit( 
 #             profanity_tfidf_features)
 #     print(f"N=={profanity_n} Profanity Explained Variance: ", sum(profanity_pca.explained_variance_ratio_))
 # 

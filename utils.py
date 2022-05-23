@@ -34,8 +34,11 @@ class stopwatch:
 def tokenize_tweet(tweet_to_tokenize, as_list=False):
     tknzr = TweetTokenizer()
     tweet_to_tokenize = tweet_to_tokenize.replace("#USER#","")
+    tweet_to_tokenize = tweet_to_tokenize.replace("#USER#".lower(),"")
     tweet_to_tokenize = tweet_to_tokenize.replace("#HASHTAG#","")
+    tweet_to_tokenize = tweet_to_tokenize.replace("#HASHTAG#".lower(),"")
     tweet_to_tokenize = tweet_to_tokenize.replace("#URL#","")
+    tweet_to_tokenize = tweet_to_tokenize.replace("#URL#".lower(),"")
     if as_list:
         return tknzr.tokenize(tweet_to_tokenize)
     return " ".join(tknzr.tokenize(tweet_to_tokenize))
@@ -60,9 +63,8 @@ def filter_dictionary(dictionary, filter_list=[]):
         del dictionary[keys_del]
     return dictionary
 
-def load_dataset(DATASET_DIR):
+def load_dataset(DATASET_DIR, is_test=False):
     def get_representation_tweets(F):
-
         parsedtree = ET.parse(F)
         documents = parsedtree.iter("document")
 
@@ -71,18 +73,20 @@ def load_dataset(DATASET_DIR):
             texts.append(doc.text)
 
         return texts
-
-    GT = os.path.join(DATASET_DIR, "truth.txt")
-    true_values = {}
-    with open(GT) as f:
-        for line in f:
-            linev = line.strip().split(":::")
-            true_values[linev[0]] = linev[1]
+    if not is_test:
+        GT = os.path.join(DATASET_DIR, "truth.txt")
+        true_values = {}
+        with open(GT) as f:
+            for line in f:
+                linev = line.strip().split(":::")
+                true_values[linev[0]] = linev[1]
     
     lang = DATASET_DIR.split(os.sep)[-1]
     USERCODE_X = []
     X = []
-    y = []
+
+    if not is_test:
+        y = []
 
     for FILE in glob.glob(os.path.join(DATASET_DIR,"*.xml")):
         #The split command below gets just the file name,
@@ -96,15 +100,20 @@ def load_dataset(DATASET_DIR):
         #and the class to the y vector
         try:
             X.append(repr)
-            y.append(true_values[USERCODE])
+            if not is_test:
+                y.append(true_values[USERCODE])
         except:
             print("Failed to find: ", USERCODE)
 
     X = np.array(X)
-    y = np.array(y)
+    if not is_test:
+        y = np.array(y)
     USERCODE_X = np.array(USERCODE_X)
     print("Load XML files complete, number of tweet profiles: ", len(X))
-    return X, y, USERCODE_X, lang
+    if is_test:
+        return X, USERCODE_X, lang
+    else:
+        return X, y, USERCODE_X, lang
 
 def generate_predictions_output(predictions, usercode_x, lang="en", output_dir="OUTPUT"):
     """ 
@@ -124,4 +133,14 @@ def generate_predictions_output(predictions, usercode_x, lang="en", output_dir="
         print(f"File written to: {user_file}")
     print("Creating output files done in: ", output_dir_path)
     
+def get_top_pca_values(pca_class, tf_idf_class, top_n=20):
+    ind = np.argpartition(pca_class.components_.mean(axis=0), -top_n)[-top_n:]
+    return [tf_idf_class.index_to_term[i] for i in ind]
+
+def get_top_idf_values(author_list, tf_idf_class, top_n=20):
+    n_authors, _ = author_list.shape
+    tf_idf_matrix = []
+    for author in author_list:
+        tf_idf_matrix.append(tf_idf_class.tf_idf(author))
+
 

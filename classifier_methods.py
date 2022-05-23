@@ -93,7 +93,7 @@ def get_features_train_no_pca(author_list_train, label="Generating Train Feature
     return pos_features, count_features, lix_features, sent_features, sep_punct_features
 
 
-def get_features_train_pca(author_list_train, emoji_pca_dim=5, profanity_pca_dim=10, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
+def get_features_train_pca(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
     print(label)
     #miss_features = get_features(train, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     #emoji_features = get_features(train, emoji_embeds, "Individual Predict", supress_print=True)
@@ -134,7 +134,7 @@ def get_features_train_pca(author_list_train, emoji_pca_dim=5, profanity_pca_dim
     return emoji_features_train, profanity_features_train, word_features_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
 
 
-def get_features_train(author_list_train, emoji_pca_dim=5, profanity_pca_dim=10, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
+def get_features_train(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
     print(label)
     pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_train_no_pca(
         author_list_train)
@@ -147,8 +147,8 @@ def get_features_train(author_list_train, emoji_pca_dim=5, profanity_pca_dim=10,
     return x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
 
 
-def generate_features_train_predict(train, train_labels, test, classifier_class=RandomForestClassifier(), emoji_pca_dim=5,
-                                    profanity_pca_dim=10, word_pca_dim=20, label="", supress_prints_flag=False):
+def generate_features_train_predict(train, train_labels, test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4,
+                                    profanity_pca_dim=14, word_pca_dim=20, label="", supress_prints_flag=False):
 
     print(label)
 
@@ -163,8 +163,8 @@ def generate_features_train_predict(train, train_labels, test, classifier_class=
     return classifier.predict(x_test), classifier.predict(x_train), classifier.predict_proba(x_test), classifier
 
 
-def train_model(train, train_labels, classifier_class=RandomForestClassifier(), emoji_pca_dim=5,
-                profanity_pca_dim=10, word_pca_dim=20, label="", supress_prints_flag=False):
+def train_model(train, train_labels, classifier_class=RandomForestClassifier(), emoji_pca_dim=4,
+                profanity_pca_dim=14, word_pca_dim=20, label="", supress_prints_flag=False):
 
     print(label)
 
@@ -211,7 +211,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
 
-    return classifier, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
+    return classifier, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, x_train
 
 
 def predict(test, classifier, emoji_pca, profanity_pca, word_pca,
@@ -288,7 +288,7 @@ def cache_features(X, REGEN_FEATURES=False):
                    delimiter=",", fmt='%f')
 
 
-def cross_validate(X, y, split_n=7, emoji_pca_dim=5, profanity_pca_dim=10, word_pca_dim=20,
+def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20,
                    rdmforest=True, one_nn=True, three_nn=True,
                    five_nn=True, log_cls=True, svm_cls=True):
     if rdmforest:
