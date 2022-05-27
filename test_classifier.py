@@ -1,10 +1,11 @@
+from matplotlib.pyplot import get
 from classifier_methods import *
 from utils import * 
 import json
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 #
 ##x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
 #
@@ -45,12 +46,31 @@ def tune_params():
 
     print("Acc: ", sum(predictions==y_test)/len(y_test))
 
-acc, f1 = cross_validate(X_train, y_train)
-predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
+#acc, f1 = cross_validate(X_train, y_train)
+#predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, #word_pca_dim=20, label="Test", supress_prints_flag=False)
+#
+#print(f1_score(y_test, predictions))
 
-print(f1_score(y_test, predictions))
+# x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
+
+# top_20_word_tfidf = get_top_idf_values(X, y, words_tfidf)
+
+embed_features = get_features(X_train, tweet_word_embs)
+embed_features_test = get_features(X_test, tweet_word_embs)
+clf = RandomForestClassifier()
+clf.fit(embed_features, y_train)
+print((y_test == clf.predict(embed_features_test)).sum()/len(y_test))
+ 
 """
 With Std:
+>>> acc['RandomForest'].mean(axis=0)
+array([1.        , 0.93154762])
+>>> acc['LogRegression'].mean(axis=0)
+array([0.97470238, 0.90178571])
+>>> acc['SVM'].mean(axis=0)
+array([0.97271825, 0.91071429])
+>>> (y_test == predictions).sum()/len(y_test)
+0.9404761904761905
 
 With Mean:
 >>> acc['RandomForest'].mean(axis=0)

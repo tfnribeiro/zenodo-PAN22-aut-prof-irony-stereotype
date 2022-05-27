@@ -1,4 +1,6 @@
 import numpy as np
+from tempfile import mkdtemp
+import os.path as path
 from utils import *
 
 class tfidf:
@@ -37,8 +39,12 @@ class tfidf:
                             self.n_terms += 1
 
         self.index_to_term = {v:k for k,v in self.idf_terms.items()}
-
-        self.idf_matrix = np.zeros((self.n_documents, len(self.idf_terms.keys())),dtype=bool)
+        try:
+            self.idf_matrix = np.zeros((self.n_documents, len(self.idf_terms.keys())),dtype=bool)
+        except MemoryError:
+            print("WARNING: Not enough memory to create idf matrix, using disk.")
+            mem_file = path.join(mkdtemp(), 'tf_idf.dat')
+            self.idf_matrix = np.memmap(mem_file, dtype='bool', mode='w+', shape=(self.n_documents, len(self.idf_terms.keys())))
 
         document_i = 0
         for author in corpus:

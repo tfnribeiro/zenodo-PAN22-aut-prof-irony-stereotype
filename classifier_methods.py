@@ -7,9 +7,11 @@ from sklearn.decomposition import PCA, SparsePCA
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import f1_score
 from sklearn import svm
+from torch import embedding
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
+from word_emb import * 
 from sent_polarity import *
 from punctuation import *
 from tqdm import tqdm
@@ -46,6 +48,8 @@ def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoj
                                  "Individual Predict", supress_print=supress_prints_flag)
     sep_punct_features = get_features(
         author_list_test, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+    
+    # embedding_features = get_features(author_list_test, tweet_word_embs, "Individual Predict", supress_print=supress_prints_flag)
     #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
     emoji_tfidf_features = get_features(
         author_list_test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
@@ -89,6 +93,9 @@ def get_features_train_no_pca(author_list_train, label="Generating Train Feature
                                  "Individual Predict", supress_print=supress_prints_flag)
     sep_punct_features = get_features(
         author_list_train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+
+    #embedding_features = get_features(author_list_train, tweet_word_embs, "Individual Predict", supress_print=supress_prints_flag)
+    
 
     return pos_features, count_features, lix_features, sent_features, sep_punct_features
 
@@ -136,13 +143,13 @@ def get_features_train_pca(author_list_train, emoji_pca_dim=4, profanity_pca_dim
 
 def get_features_train(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
     print(label)
-    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_train_no_pca(
+    pos_features, count_features, lix_features, sent_features, sep_punct_features, embed_features = get_features_train_no_pca(
         author_list_train)
     emoji_features_train, profanity_features_train, word_features_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train_pca(
         author_list_train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label, supress_prints_flag)
 
     x_train = np.concatenate((pos_features, count_features, sent_features, sep_punct_features,
-                             lix_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
+                             lix_features, embed_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
 
     return x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
 
@@ -206,7 +213,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     word_features_train = word_pca.fit_transform(words_tfidf_features)
 
     x_train = np.concatenate((pos_features, count_features, sent_features, sep_punct_features,
-                             lix_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
+                             lix_features, profanity_features_train, word_features_train), axis=1)
 
     classifier = classifier_class
     classifier.fit(x_train, train_labels)

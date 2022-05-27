@@ -24,8 +24,8 @@ def get_sent_polarity(user_tweet_list, filter_keys=[]):
         author_sent_dict[k] = polarity_vec[i]
 
     author_sent_dict = filter_dictionary(author_sent_dict, filter_keys)
-
-    return np.array(list(author_sent_dict.values())).std(axis=0)
+    features = np.array(list(author_sent_dict.values())).std(axis=0)
+    return features
 
 """
 Best Parameters:  (40, 0.01) Acc:  0.6666666666666666
