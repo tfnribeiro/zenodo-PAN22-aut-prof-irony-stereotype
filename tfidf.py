@@ -6,7 +6,10 @@ from utils import *
 class tfidf:
     def __init__(self, corpus, terms_filter=None, lowercase=False, authors_document=False) -> None:
         """
+            corpus = List of Lists with tweets
             terms_filter = set() of reduced words, can be emojis for istance.
+            lowercase (bool) sets the tweets to lowercase
+            authors_document uses each author as a document
         """
         self.lowercase = lowercase
         if self.lowercase:
@@ -57,10 +60,14 @@ class tfidf:
             if self.authors_document:
                 document_i += 1
         
-        # 1 x d
+        # 1 x d, term_idf vector
         self.term_idf = np.log2(self.n_documents / (np.sum(self.idf_matrix, axis=0)))
 
     def tf(self, author):
+        """
+            Calculate term frequency for a specific author.
+            Returns the TF count matrix.
+        """
         if self.lowercase:
             author = np.char.lower(author)
         if self.authors_document:
@@ -86,6 +93,9 @@ class tfidf:
         return tf_matrix
     
     def tf_idf(self, author):
+        """
+            Uses the TF count matrix to generate the average TF-IDF vector.
+        """
         if self.lowercase:
             author = np.char.lower(author)
         tf_vector = self.tf(author)
