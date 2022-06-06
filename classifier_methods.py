@@ -73,7 +73,7 @@ def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoj
         author_list_test, seperated_punctuation, "Individual Predict", verbose=verbose)
     
     # embedding_features = get_features(author_list_test, tweet_word_embs, "Individual Predict", verbose=verbose)
-    #miss_features = get_features(test, misspelled, "Individual Predict", verbose=True).reshape((-1,1))
+    # miss_features = get_features(test, misspelled, "Individual Predict", verbose=True).reshape((-1,1))
     emoji_tfidf_features = get_features(
         author_list_test, emoji_tfidf.tf_idf, "Individual Predict", verbose=verbose)
     profanity_tfidf_features = get_features(
@@ -268,7 +268,7 @@ def generate_features_train_predict(train, train_labels, test, classifier_class=
     print(label)
 
     x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(
-        train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", verbose=False)
+        train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", verbose=verbose)
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
 
@@ -332,7 +332,6 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     profanity_tfidf_features = get_features(
         train, profanity_tfidf.tf_idf, "Profanity TF_IDF")
 
-    #emoji_features = get_features(X_train_all, emoji_embeds, "All Data")
     words_tfidf = fit_word_embeds_tfidf(train)
     words_tfidf_features = get_features(
         train, words_tfidf.tf_idf, "Words TF_IDF")
@@ -343,7 +342,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     word_features_train = word_pca.fit_transform(words_tfidf_features)
 
     x_train = np.concatenate((pos_features, count_features, sent_features, sep_punct_features,
-                             lix_features, profanity_features_train, word_features_train), axis=1)
+                             lix_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
 
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
