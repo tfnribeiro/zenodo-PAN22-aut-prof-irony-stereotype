@@ -22,3 +22,4 @@ tqdm==4.64.0
 urllib3==1.26.9
 vaderSentiment==3.3.2
 wincertstore==0.2
+gensim==4.2.0

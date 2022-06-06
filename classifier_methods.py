@@ -7,9 +7,11 @@ from sklearn.decomposition import PCA, SparsePCA
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import f1_score
 from sklearn import svm
+from torch import embedding
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
+from word_emb import * 
 from sent_polarity import *
 from punctuation import *
 from tqdm import tqdm
@@ -17,9 +19,19 @@ import pandas as pd
 import os
 
 
-def get_features(dataset, function, label="", supress_print=False):
+def get_features(dataset, function, label="", verbose=False):
+    """
+        Generate the features based on a function to transform the original dataset.
+        Inputs:
+            dataset(List of Tweets)
+            function(fn): Function like the ones present in count_features.py
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            np.array with the features returned by the function
+    """
     list_features = []
-    if supress_print:
+    if verbose:
         for i in range(len(dataset)):
             tweet_list = dataset[i]
             get_features = function(tweet_list)
@@ -34,25 +46,41 @@ def get_features(dataset, function, label="", supress_print=False):
     return np.array(list_features)
 
 
-def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, label="Generating Test Features", supress_prints_flag=False):
+def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, label="Generating Test Features", verbose=False):
+    """
+        Generate a test vector which can be provided to a trained classifier
+        Inputs:
+            author_list_test - list of list of strings: Author List with Tweets to be transformed into an input vector 
+            emoji_pca, profanity_pca, word_pca: pca objects trained on the training data, the can be obtained when running get_features_train
+            emoji_tfidf, profanity_tfidf, words_tfidf: tfidf objects trained on the trainind data, these can be obtained when running get_features_train
+            NOTE: for easy use, you can use the unpacking feature of python:
+                if pca_tfidf_settings = (emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
+                - You can call get_features_test(author_list_test, *pca_tfidf_settings, ...)
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            np.array of size N_authors x Feature Size. This vector can be used in a train classifier to make predictions
+    """
     print(label)
     pos_features = get_features(author_list_test, pos_counts,
-                                "Individual Predict", supress_print=supress_prints_flag)
+                                "Individual Predict", verbose=verbose)
     count_features = get_features(author_list_test, author_style_counts,
-                                  "Individual Predict", supress_print=supress_prints_flag)
+                                  "Individual Predict", verbose=verbose)
     lix_features = get_features(author_list_test, lix_score,
-                                "Individual Predict", supress_print=supress_prints_flag)
+                                "Individual Predict", verbose=verbose)
     sent_features = get_features(author_list_test, get_sent_polarity,
-                                 "Individual Predict", supress_print=supress_prints_flag)
+                                 "Individual Predict", verbose=verbose)
     sep_punct_features = get_features(
-        author_list_test, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
-    #miss_features = get_features(test, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
+        author_list_test, seperated_punctuation, "Individual Predict", verbose=verbose)
+    
+    # embedding_features = get_features(author_list_test, tweet_word_embs, "Individual Predict", verbose=verbose)
+    #miss_features = get_features(test, misspelled, "Individual Predict", verbose=True).reshape((-1,1))
     emoji_tfidf_features = get_features(
-        author_list_test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
+        author_list_test, emoji_tfidf.tf_idf, "Individual Predict", verbose=verbose)
     profanity_tfidf_features = get_features(
-        author_list_test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
+        author_list_test, profanity_tfidf.tf_idf, "Individual Predict", verbose=verbose)
     words_tfidf_features = get_features(
-        author_list_test, words_tfidf.tf_idf, "Words TF_IDF", supress_print=supress_prints_flag)
+        author_list_test, words_tfidf.tf_idf, "Words TF_IDF", verbose=verbose)
     emoji_features_test = emoji_pca.transform(emoji_tfidf_features)
     profanity_features_test = profanity_pca.transform(profanity_tfidf_features)
     word_features_test = word_pca.transform(words_tfidf_features)
@@ -62,14 +90,30 @@ def get_features_test(author_list_test, emoji_pca, profanity_pca, word_pca, emoj
 
     return x_test
 
-def get_features_test_pca(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, label="Generating Test Features", supress_prints_flag=False):
+def get_features_test_pca(author_list_test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, label="Generating Test Features", verbose=False):
+    """
+        Generate PCA features, this is mostly used in Cross Validation, to ensure no data is used when training the TF-IDF/PCA objects
+        Inputs:
+            author_list_test - list of list of strings: Author List with Tweets to be transformed into an input vector 
+            emoji_pca, profanity_pca, word_pca: pca objects trained on the training data, the can be obtained when running get_features_train
+            emoji_tfidf, profanity_tfidf, words_tfidf: tfidf objects trained on the trainind data, these can be obtained when running get_features_train
+            NOTE: for easy use, you can use the unpacking feature of python:
+                if pca_tfidf_settings = (emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
+                - You can call get_features_test(author_list_test, *pca_tfidf_settings, ...)
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            emoji_features_test: np.array, size N authors x Emoji PCA size
+            profanity_features_test: np.array, size N authors x profanity PCA size
+            word_features_test: np.array, size N authors x word PCA size
+    """
     print(label)
     emoji_tfidf_features = get_features(
-        author_list_test, emoji_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
+        author_list_test, emoji_tfidf.tf_idf, "Individual Predict", verbose=verbose)
     profanity_tfidf_features = get_features(
-        author_list_test, profanity_tfidf.tf_idf, "Individual Predict", supress_print=supress_prints_flag)
+        author_list_test, profanity_tfidf.tf_idf, "Individual Predict", verbose=verbose)
     words_tfidf_features = get_features(
-        author_list_test, words_tfidf.tf_idf, "Words TF_IDF", supress_print=supress_prints_flag)
+        author_list_test, words_tfidf.tf_idf, "Words TF_IDF", verbose=verbose)
     emoji_features_test = emoji_pca.transform(emoji_tfidf_features)
     profanity_features_test = profanity_pca.transform(profanity_tfidf_features)
     word_features_test = word_pca.transform(words_tfidf_features)
@@ -77,27 +121,63 @@ def get_features_test_pca(author_list_test, emoji_pca, profanity_pca, word_pca, 
     return emoji_features_test, profanity_features_test, word_features_test
 
 
-def get_features_train_no_pca(author_list_train, label="Generating Train Features", supress_prints_flag=False):
+def get_features_no_pca(author_list_train, label="Generating Train Features", verbose=False):
+    """
+        Generate features which do not require to be fitted. These are Features based on counts or existing models
+        Inputs:
+            author_list_test - list of list of strings: Author List with Tweets to be transformed into an input vector 
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            pos_features: np.array, size N authors x POS vector (pos_counts.py)
+            count_features: np.array, size N authors x Count vector (count_features.py)
+            lix_features: np.array, size N authors x LixScore (lexical_comp.py)
+            sent_features: np.array, size N authors x VaderSentSTD(across tweets) (sent_polarity.py)
+            sep_punct_features: np.array, size N authors x Punctuation Vector (punctuation.py)
+    """
     print(label)
     pos_features = get_features(author_list_train, pos_counts,
-                                "Individual Predict", supress_print=supress_prints_flag)
+                                "Individual Predict", verbose=verbose)
     count_features = get_features(author_list_train, author_style_counts,
-                                  "Individual Predict", supress_print=supress_prints_flag)
+                                  "Individual Predict", verbose=verbose)
     lix_features = get_features(author_list_train, lix_score,
-                                "Individual Predict", supress_print=supress_prints_flag)
+                                "Individual Predict", verbose=verbose)
     sent_features = get_features(author_list_train, get_sent_polarity,
-                                 "Individual Predict", supress_print=supress_prints_flag)
+                                 "Individual Predict", verbose=verbose)
     sep_punct_features = get_features(
-        author_list_train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+        author_list_train, seperated_punctuation, "Individual Predict", verbose=verbose)
+
+    #embedding_features = get_features(author_list_train, tweet_word_embs, "Individual Predict", verbose=verbose)
+    
 
     return pos_features, count_features, lix_features, sent_features, sep_punct_features
 
 
-def get_features_train_pca(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
+def get_features_train_pca(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", verbose=False):
+    """
+        Generate PCA and TF-IDF objects and returns the transformed data for each of these objects.
+        Inputs:
+            author_list_test - list of list of strings: Author List with Tweets to be transformed into an input vector
+            emoji_pca_dim (int): Number of dimensions for the emoji pca: default=4
+            profanity_pca_dim (int): Number of dimensions for the profanity pca: default=14
+            word_pca_dim (int): Number of dimensions for the word pca: default=20
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            emoji_features_train : np.array NAuthors X Emoji_pca_dim, tranformed vector for emoji pca
+            profanity_features_train : np.array NAuthors X Profanity_pca_dim, tranformed vector for profanity pca 
+            word_features_train : np.array NAuthors X Word_pca_dim, tranformed vector for word pca
+            emoji_pca : Emoji PCA object (sklearn)
+            profanity_pca : Profanity PCA object (sklearn)
+            word_pca : Word PCA object (sklearn)
+            emoji_tfidf : Emoji TFIDF object (tfidf.py)
+            profanity_tfidf : Profanity TFIDF object (tfidf.py)
+            words_tfidf : Word TFIDF object (tfidf.py)
+    """
     print(label)
-    #miss_features = get_features(train, misspelled, "Individual Predict", supress_print=True).reshape((-1,1))
-    #emoji_features = get_features(train, emoji_embeds, "Individual Predict", supress_print=True)
-    #profanity_features = get_features(train, profanity_embeds, "Individual Predict", supress_print=True)
+    #miss_features = get_features(train, misspelled, "Individual Predict", verbose=True).reshape((-1,1))
+    #emoji_features = get_features(train, emoji_embeds, "Individual Predict", verbose=True)
+    #profanity_features = get_features(train, profanity_embeds, "Individual Predict", verbose=True)
     emoji_pca_n = emoji_pca_dim
     profanity_pca_n = profanity_pca_dim
     word_pca_n = word_pca_dim
@@ -109,17 +189,17 @@ def get_features_train_pca(author_list_train, emoji_pca_dim=4, profanity_pca_dim
     emoji_tfidf = fit_emoji_embeds_tfidf(
         author_list_train, authors_document=False)
     emoji_tfidf_features = get_features(
-        author_list_train, emoji_tfidf.tf_idf, "Emoji TF_IDF", supress_print=supress_prints_flag)
+        author_list_train, emoji_tfidf.tf_idf, "Emoji TF_IDF", verbose=verbose)
 
     profanity_tfidf = fit_profanity_embeds_tfidf(
         author_list_train, authors_document=False)
     profanity_tfidf_features = get_features(
-        author_list_train, profanity_tfidf.tf_idf, "Profanity TF_IDF", supress_print=supress_prints_flag)
+        author_list_train, profanity_tfidf.tf_idf, "Profanity TF_IDF", verbose=verbose)
 
     words_tfidf = fit_word_embeds_tfidf(
         author_list_train, authors_document=False)
     words_tfidf_features = get_features(
-        author_list_train, words_tfidf.tf_idf, "Words TF_IDF", supress_print=supress_prints_flag)
+        author_list_train, words_tfidf.tf_idf, "Words TF_IDF", verbose=verbose)
 
     emoji_features_train = emoji_pca.fit_transform(emoji_tfidf_features)
     print("Emoji Explained Variance: ", sum(
@@ -134,12 +214,30 @@ def get_features_train_pca(author_list_train, emoji_pca_dim=4, profanity_pca_dim
     return emoji_features_train, profanity_features_train, word_features_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf
 
 
-def get_features_train(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", supress_prints_flag=False):
+def get_features_train(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Generating Train Features", verbose=False):
+    """
+        Generate features for training. This means it will fit PCA/TFIDF by using get_features_train_pca
+        Inputs:
+            author_list_test - list of list of strings: Author List with Tweets to be transformed into an input vector
+            emoji_pca_dim (int): Number of dimensions for the emoji pca: default=4
+            profanity_pca_dim (int): Number of dimensions for the profanity pca: default=14
+            word_pca_dim (int): Number of dimensions for the word pca: default=20
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            x_train : np.array N Author x All Features, to be used to train the calssifier 
+            emoji_pca : Emoji PCA object (sklearn)
+            profanity_pca : Profanity PCA object (sklearn)
+            word_pca : Word PCA object (sklearn)
+            emoji_tfidf : Emoji TFIDF object (tfidf.py)
+            profanity_tfidf : Profanity TFIDF object (tfidf.py)
+            words_tfidf : Word TFIDF object (tfidf.py)
+    """
     print(label)
-    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_train_no_pca(
+    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_no_pca(
         author_list_train)
     emoji_features_train, profanity_features_train, word_features_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train_pca(
-        author_list_train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label, supress_prints_flag)
+        author_list_train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label, verbose)
 
     x_train = np.concatenate((pos_features, count_features, sent_features, sep_punct_features,
                              lix_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
@@ -148,36 +246,76 @@ def get_features_train(author_list_train, emoji_pca_dim=4, profanity_pca_dim=14,
 
 
 def generate_features_train_predict(train, train_labels, test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4,
-                                    profanity_pca_dim=14, word_pca_dim=20, label="", supress_prints_flag=False):
-
+                                    profanity_pca_dim=14, word_pca_dim=20, label="", verbose=False):
+    """
+        Generate features for training and trains a classifier (sklearn) and tests it on a training set. 
+        This means it will fit PCA/TFIDF by using get_features_train_pca and then uses the classifier class provided
+        to fit a classifier and returns it.
+        Inputs:
+            train - list of list of strings: Author List with Tweets to use as train data
+            train_labels - list the same size of train with either 'I' or 'NI' for each author
+            test - list of list of strings: Author List with Tweets to use as test data
+            classifier_class - SKlearn object to perform classification
+            emoji_pca_dim (int): Number of dimensions for the emoji pca: default=4
+            profanity_pca_dim (int): Number of dimensions for the profanity pca: default=14
+            word_pca_dim (int): Number of dimensions for the word pca: default=20
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            classifier.predict(x_test): Predictions on the test data 
+            classifier.predict(x_train): Predictions on the training data
+            classifier : Sklearn Classifier object 
+    """
     print(label)
 
     x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(
-        train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", supress_prints_flag=False)
+        train, emoji_pca_dim, profanity_pca_dim, word_pca_dim, label="", verbose=False)
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
 
     x_test = get_features_test(
         test, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
 
-    return classifier.predict(x_test), classifier.predict(x_train), classifier.predict_proba(x_test), classifier
+    return classifier.predict(x_test), classifier.predict(x_train), classifier
 
 
 def train_model(train, train_labels, classifier_class=RandomForestClassifier(), emoji_pca_dim=4,
-                profanity_pca_dim=14, word_pca_dim=20, label="", supress_prints_flag=False):
-
+                profanity_pca_dim=14, word_pca_dim=20, label="", verbose=False):
+    """
+        Generate features for training and trains a classifier (sklearn). 
+        This means it will fit PCA/TFIDF by using get_features_train_pca and then uses the classifier class provided
+        to fit a classifier and returns it.
+        Inputs:
+            train - list of list of strings: Author List with Tweets to use as train data
+            train_labels - list the same size of train with either 'I' or 'NI' for each author
+            classifier_class - SKlearn object to perform classification
+            emoji_pca_dim (int): Number of dimensions for the emoji pca: default=4
+            profanity_pca_dim (int): Number of dimensions for the profanity pca: default=14
+            word_pca_dim (int): Number of dimensions for the word pca: default=20
+            label(str): Used when printing the final to show the output
+            verbose(bool): Flag to control the log level
+        Output:
+            classifier: Sklearn object fitted to train
+            emoji_pca : Emoji PCA object (sklearn)
+            profanity_pca : Profanity PCA object (sklearn)
+            word_pca : Word PCA object (sklearn)
+            emoji_tfidf : Emoji TFIDF object (tfidf.py)
+            profanity_tfidf : Profanity TFIDF object (tfidf.py)
+            words_tfidf : Word TFIDF object (tfidf.py)
+            x_train : np.array N Author x All Features, to be used to train the calssifier 
+    """
     print(label)
 
     pos_features = get_features(
-        train, pos_counts, "Individual Predict", supress_print=supress_prints_flag)
+        train, pos_counts, "Individual Predict", verbose=verbose)
     count_features = get_features(
-        train, author_style_counts, "Individual Predict", supress_print=supress_prints_flag)
+        train, author_style_counts, "Individual Predict", verbose=verbose)
     lix_features = get_features(
-        train, lix_score, "Individual Predict", supress_print=supress_prints_flag)
+        train, lix_score, "Individual Predict", verbose=verbose)
     sent_features = get_features(
-        train, get_sent_polarity, "Individual Predict", supress_print=supress_prints_flag)
+        train, get_sent_polarity, "Individual Predict", verbose=verbose)
     sep_punct_features = get_features(
-        train, seperated_punctuation, "Individual Predict", supress_print=supress_prints_flag)
+        train, seperated_punctuation, "Individual Predict", verbose=verbose)
 
     emoji_pca_n = emoji_pca_dim
     profanity_pca_n = profanity_pca_dim
@@ -206,7 +344,7 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
     word_features_train = word_pca.fit_transform(words_tfidf_features)
 
     x_train = np.concatenate((pos_features, count_features, sent_features, sep_punct_features,
-                             lix_features, emoji_features_train, profanity_features_train, word_features_train), axis=1)
+                             lix_features, profanity_features_train, word_features_train), axis=1)
 
     classifier = classifier_class
     classifier.fit(x_train, train_labels)
@@ -216,24 +354,45 @@ def train_model(train, train_labels, classifier_class=RandomForestClassifier(), 
 
 def predict(test, classifier, emoji_pca, profanity_pca, word_pca,
             emoji_tfidf, profanity_tfidf, words_tfidf):
-
+    """
+        Generate test features and predicts using the classifier (needs to be trained). 
+        Inputs:
+            test - list of list of strings: Author List with Tweets to be predicted
+            classifier - SKlearn object to perform classification
+            emoji_pca, profanity_pca, word_pca: pca objects trained on the training data, 
+            these can be obtained when running get_features_train
+            emoji_tfidf, profanity_tfidf, words_tfidf: tfidf objects trained on the trainind data, 
+            these can be obtained when running get_features_train
+        Output:
+            classifier.predict(x_test) : list of predictions ('I' or 'NI')
+            classifier.predict_proba(x_test) : list of predictions probabilities
+    """
     x_test = get_features_test(test, emoji_pca, profanity_pca, word_pca,
-                               emoji_tfidf, profanity_tfidf, words_tfidf, supress_prints_flag=False)
+                               emoji_tfidf, profanity_tfidf, words_tfidf, verbose=False)
 
     return classifier.predict(x_test), classifier.predict_proba(x_test)
 
 
 def cache_features(X, REGEN_FEATURES=False):
+    """
+        Creates a file on disk with the transformed features. Can be useful if the same
+        data is being used again and again.  
+        Inputs:
+            X - list of authors to create features for
+            REGEN_FEATURES - Force flag to ensure that if the file is found it's overwritten.
+        Output:
+            VOID METHOD (no output)
+            Creates the file in current directory with the name based on class for features.
+    """
     if not REGEN_FEATURES and os.path.isfile("pos_features.csv"):
-        pos_features = np.loadtxt("pos_features.csv", delimiter=",")
+        pass
     else:
         pos_features = get_features(X, pos_counts, "All Data")
         np.savetxt("pos_features.csv", pos_features, delimiter=",", fmt='%f')
 
     # author style
     if not REGEN_FEATURES and os.path.isfile("author_style_counts.csv"):
-        print(get_author_style_labels())
-        count_features = np.loadtxt("author_style_counts.csv", delimiter=",")
+        pass
     else:
         count_features = get_features(X, author_style_counts, "All Data")
         np.savetxt("author_style_counts.csv",
@@ -241,15 +400,14 @@ def cache_features(X, REGEN_FEATURES=False):
 
     # lix
     if not REGEN_FEATURES and os.path.isfile("lix_score.csv"):
-        lix_features = np.loadtxt(
-            "lix_score.csv", delimiter=",").reshape((-1, 1))
+        pass
     else:
         lix_features = get_features(X, lix_score, "All Data")
         np.savetxt("lix_score.csv", lix_features, delimiter=",", fmt='%f')
 
     # punctuation
     if not REGEN_FEATURES and os.path.isfile("punct_score.csv"):
-        punct_features = np.loadtxt("punct_score.csv", delimiter=",")
+        pass
     else:
         punct_features = get_features(X, seperated_punctuation, "All Data")
         np.savetxt("sep_punct_score.csv", punct_features,
@@ -257,7 +415,7 @@ def cache_features(X, REGEN_FEATURES=False):
 
     # seperated pronunciation
     if not REGEN_FEATURES and os.path.isfile("sep_punct_score.csv"):
-        sep_punct_features = np.loadtxt("sep_punct_score.csv", delimiter=",")
+        pass
     else:
         sep_punct_features = get_features(X, seperated_punctuation, "All Data")
         np.savetxt("sep_punct_score.csv", sep_punct_features,
@@ -265,7 +423,7 @@ def cache_features(X, REGEN_FEATURES=False):
 
     # emoji features
     if not REGEN_FEATURES and os.path.isfile("emoji_features.csv"):
-        emoji_features = np.loadtxt("emoji_features.csv", delimiter=",")
+        pass
     else:
         emoji_features = get_features(X, emoji_embeds, "All Data")
         np.savetxt("emoji_features.csv",  emoji_features,
@@ -273,7 +431,7 @@ def cache_features(X, REGEN_FEATURES=False):
 
     # sentence polarity
     if not REGEN_FEATURES and os.path.isfile("get_sent_polarity.csv"):
-        sent_features = np.loadtxt("get_sent_polarity.csv", delimiter=",")
+        pass
     else:
         sent_features = get_features(X, get_sent_polarity, "All Data")
         np.savetxt("get_sent_polarity.csv",
@@ -281,7 +439,7 @@ def cache_features(X, REGEN_FEATURES=False):
 
     # profanity
     if not REGEN_FEATURES and os.path.isfile("profanity_counts.csv"):
-        profanity_features = np.loadtxt("profanity_counts.csv", delimiter=",")
+        pass
     else:
         profanity_features = get_features(X, profanity_embeds, "All Data")
         np.savetxt("profanity_counts.csv",  profanity_features,
@@ -291,6 +449,23 @@ def cache_features(X, REGEN_FEATURES=False):
 def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20,
                    rdmforest=True, one_nn=True, three_nn=True,
                    five_nn=True, log_cls=True, svm_cls=True):
+    """
+        Performs cross-validation using specified splits.
+        The method ensures that no training data is used to fit the PCA and TF-IDF. However, this means that
+        for each split the TF-IDF/PCA features needs to be re-calculated, which takes time.
+
+        Inputs:
+            X - list of authors with tweets to be used as features
+            y - list the same size of X with either 'I' or 'NI' for each author
+            split_n (int) - number of cross validation splits to perform (default = 7)
+            emoji_pca_dim (int): Number of dimensions for the emoji pca: default=4
+            profanity_pca_dim (int): Number of dimensions for the profanity pca: default=14
+            word_pca_dim (int): Number of dimensions for the word pca: default=20
+            rdmforest (bool), ... : Defines if the classifier should be used during cross validation
+        Output:
+            acc_dict (dict): of type "Classifier" -> [(TrainSplit1_acc, TestSplit1_Acc), (TrainSplit2_acc, TestSplit2_Acc)...]
+            f1_dict: of type "Classifier" -> [F1ScoreTestSplit1, F1ScoreTestSplit2, ...]
+    """
     if rdmforest:
         random_forest_list = []
         f1_random_forest_list = []
@@ -314,7 +489,7 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
     kf = KFold(n_splits=split_n)
     print(f"Performing Cross-Validation...")
     # Save time by not re-computing static features.
-    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_train_no_pca(
+    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_no_pca(
         X)
 
     for i, (train_index, test_index) in enumerate(kf.split(X)):
@@ -480,6 +655,22 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
 def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca_dim=[10], word_pca_dim=[20],
                    rdmforest=True, one_nn=True, three_nn=True,
                    five_nn=True, log_cls=True, svm_cls=True):
+    """
+        Same as cross_validate, but takes a list of dimensions for PCA to find the best parameters.
+
+        Inputs:
+            X - list of authors with tweets to be used as features
+            y - list the same size of X with either 'I' or 'NI' for each author
+            split_n (int) - number of cross validation splits to perform (default = 7)
+            emoji_pca_dim (list(int)): List of number of dimensions for the emoji pca: default=4
+            profanity_pca_dim (list(int)): List of number of dimensions for the profanity pca: default=14
+            word_pca_dim (list(int)): List of number of dimensions for the word pca: default=20
+            rdmforest (bool), ... : Defines if the classifier should be used during cross validation
+        Output:
+            acc_dict (dict): of type "Classifier" -> (emoji_dim, profanity_dim, word_dim) -> [(TrainSplit1_acc, TestSplit1_Acc), (TrainSplit2_acc, TestSplit2_Acc)...]
+            f1_dict: of type "Classifier" -> (emoji_dim, profanity_dim, word_dim) -> [F1ScoreTestSplit1, F1ScoreTestSplit2, ...]
+            best_e, best_p, best_w : Best parameters for emoji, profanity, word parameters on acc 
+    """
     acc_dict = {}
     f1_dict = {}
 
@@ -506,7 +697,7 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
     kf = KFold(n_splits=split_n)
     print(f"Performing Cross-Validation...")
     # Save time by not re-computing static features.
-    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_train_no_pca(
+    pos_features, count_features, lix_features, sent_features, sep_punct_features = get_features_no_pca(
         X)
     best_e, best_p, best_w = -1,-1,-1
     for emoji_n in emoji_pca_dim:
@@ -654,11 +845,16 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
     return acc_dict, f1_dict, best_e, best_p, best_w
 
 def print_dictionaries_cross_validate(dict_acc, dict_f1):
+    """
+        Simple method to print the mean results for each dictionary resulting from cross_validation.
+
+        Note: this does not work for the tuning_cross_validation.
+    """
     keys = list(dict_acc.keys())
     n_splits = len(dict_acc[keys[0]])
     print(f"Printing values for n=={n_splits}")
     for key in dict_acc.keys():
         print(
-            f"Average acc,           for {key}: {dict_acc[key].mean(axis=0)}")
+              f"Average acc,           for {key}: {dict_acc[key].mean(axis=0)}")
     for key in dict_acc.keys():
         print(f"Average F1 (Weighted), for {key}: {dict_f1[key].mean(axis=0)}")

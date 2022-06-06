@@ -1,4 +1,7 @@
 from nltk.tokenize import TweetTokenizer 
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 from tqdm import tqdm
 import os
 import numpy as np
@@ -137,10 +140,22 @@ def get_top_pca_values(pca_class, tf_idf_class, top_n=20):
     ind = np.argpartition(pca_class.components_.mean(axis=0), -top_n)[-top_n:]
     return [tf_idf_class.index_to_term[i] for i in ind]
 
-def get_top_idf_values(author_list, tf_idf_class, top_n=20):
+def get_top_idf_values(author_list, y_train, tf_idf_class, top_n=20):
     n_authors, _ = author_list.shape
     tf_idf_matrix = []
-    for author in author_list:
+    for author in tqdm(author_list):
         tf_idf_matrix.append(tf_idf_class.tf_idf(author))
+    pipe_log = LogisticRegression() #make_pipeline(StandardScaler(), LogisticRegression())
+    print(pipe_log)
+    pipe_log.fit(tf_idf_matrix, y_train)
+    #log_reg_class = pipe_log.named_steps['logisticregression']
+    log_weights = pipe_log.coef_
+    print(log_weights.shape)
+    log_weights = log_weights[0]
+    print(log_weights.shape)
+    ind = np.argpartition(log_weights, -top_n)[-top_n:]
+    print(ind)
+    return [tf_idf_class.index_to_term[i] for i in ind]
+
 
 

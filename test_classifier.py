@@ -4,7 +4,7 @@ import json
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 #
 ##x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
 #
@@ -14,20 +14,21 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random
 # Best Params (ACC) so far - 0.9353594389246055 : Emoji_n:5 | Profanity_n:9 | Word_n:10
 # Best Params (ACC) so far - 0.9318527177089422 : Emoji_n:10 | Profanity_n:10 | Word_n:10
 # Best Params (ACC) so far - 0.9338245614035088 : Emoji_n:10 | Profanity_n:15 | Word_n:15
-# 0.939157894736842 : Emoji_n:4 | Profanity_n:14 | Word_n:20
+# 0.939157894736842 : Emoji_n:4 | Profanity_n:14 | Word_n:20 - sent (mean)
+# 0.9464003511852501 : Emoji_n:4 | Profanity_n:14 | Word_n:20 - sent (std)
 
 def tune_params():
     acc_dict, f1_dict, best_e, best_p, best_w = cross_validate_tune_params(X_train, y_train, 5, emoji_pca_dim=np.arange(2,5,2), profanity_pca_dim=np.arange(10,16,2), word_pca_dim=np.arange(15,26,5))
 
     # create json object from dictionary
     acc_dict_json = dict()
-    for classifier in acc_dict.keys():
+    for classifier in acc.keys():
         acc_dict_json[classifier] = dict()
         for params in acc_dict[classifier].keys():
             acc_dict_json[classifier][str(params)] = acc_dict[classifier][params].mean(axis=0)[1]
 
     f1_dict_json = dict()
-    for classifier in f1_dict.keys():
+    for classifier in f1.keys():
         f1_dict_json[classifier] = dict()
         for params in f1_dict[classifier].keys():
             f1_dict_json[classifier][str(params)] = f1_dict[classifier][params].mean()
@@ -35,22 +36,39 @@ def tune_params():
     json_acc = json.dumps(acc_dict_json)
     json_f1 = json.dumps(f1_dict_json)
 
-    with open("acc_search_value.json","w") as f:
+    with open("acc_search_value_std_sent.json","w") as f:
         f.write(json_acc)
 
-    with open("f1_search_value.json","w") as f:
+    with open("f1_search_value_std_sent.json","w") as f:
         f.write(json_f1)
 
     predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
 
     print("Acc: ", sum(predictions==y_test)/len(y_test))
 
-acc, f1 = cross_validate(X_train, y_train)
-predictions, _, prob, classifier = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
 
-print(f1_score(y_test, predictions))
+# acc, f1 = cross_validate(X_train, y_train)
+rfc_predictions, _, rfc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
+svmc_predictions, _, svmc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), svm.SVC(gamma="auto")), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
+logregc_predictions, _, logregc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), LogisticRegression()), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
+
+#
+#print(f1_score(y_test, predictions, average="weighted"))
+
+# x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
+
+# top_20_word_tfidf = get_top_idf_values(X, y, words_tfidf)
+ 
 """
 With Std:
+>>> acc['RandomForest'].mean(axis=0)
+array([1.        , 0.93154762])
+>>> acc['LogRegression'].mean(axis=0)
+array([0.97470238, 0.90178571])
+>>> acc['SVM'].mean(axis=0)
+array([0.97271825, 0.91071429])
+>>> (y_test == predictions).sum()/len(y_test)
+0.9404761904761905
 
 With Mean:
 >>> acc['RandomForest'].mean(axis=0)

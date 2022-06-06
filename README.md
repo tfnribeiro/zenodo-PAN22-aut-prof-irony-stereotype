@@ -5,22 +5,56 @@
 https://pan.webis.de/clef22/pan22-web/author-profiling.html
 
 ## Features Used:
-- Pos/Neg Polarity Counts (Threshold Defined beforehand) ✅
-- Vocab Size - Tiago ✅
-- Type/Token Ration (N_Vocabs/N_Words) - Tiago ✅
-- Avg. Word Length - Tiago ✅
-- Avg. Tweet Length - Tiago ✅
-- Avg. Emoji Count - Tiago ✅
-- Repeated Punctuations Count "..." "?!" "!" "?" - Kaja ✅
-- Number of Typos - Kaja ✅
-- Avg. Profanity per tweet - Yana ✅
-- Avg. Proportion of Capital Letters - Tiago ✅
-- Avg. Tweet LiX complexity - Tiago ✅
-- Syntactic Complexity - Yana
-    - Vector with multiple measures.
-- Counts of POS tags (Avg. Tweet) - Tiago ✅
+- Vader Sentiment Standard Deviation (Across Tweets)
+- Vocab Size
+- Type/Token Ration (N_Vocabs/N_Words)
+- Avg. Word Length
+- Avg. Tweet Length
+- Repeated Punctuations Count "..." "?!" "!" "?"
+- Emoji Counts (Using TF-IDF + PCA) 
+- Profanity Counts (Using TF-IDF + PCA) 
+- Word Counts (Using TF-IDF + PCA) 
+- Avg. Proportion of Capital Letters
+- Avg. Tweet LiX complexity
+- Counts of POS tags (Avg. Tweet)
 
-## Possible Features:
+## Results:
+**Average F1 Score on Cross-Validation (70% Train), RandomForest:** 91.83%
+
+**F1 Score on 30% Train (Test Split), RandomForest:** 96.04%
+
+## Usage Example:
+You can check the file _test_predictions.py_ for a simple case of loading features and making predictions.
+
+    # Import necessary files
+    from utils import *
+    from classifier_methods import *
+
+    # Load data
+    X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
+    X_test, USERCODE_TEST_X, lang_test = load_dataset(os.path.join(os.getcwd(),"data","test","en"), is_test=True)
+    # Train a model (default is Random Forest)
+    classifier, *settings = train_model(X,y)
+    # Generate test features
+    X_test_features = get_features_test(X_test, *settings)
+    # Get Predictions:
+    pred = classifier.predict(X_test_features)
+
+
+## Features Not Implemented:
+- Syntactic Complexity
+- Number of Typos - Implemented, but not very useful.
+
+## Possible Literature:
+- https://dl.acm.org/doi/epdf/10.1145/2930663 (Irony Detection in Twitter)
+
+### Interesting Tools:
+- https://github.com/twintproject/twint
+
+### Google Docs:
+- https://docs.google.com/document/d/1gfvLkT3j-7GNFuwSzb1rLRq5NNAaPcGRwPfgnSKnpOc/edit?usp=sharing
+
+#### Possible Features:
 - Polarity Score - Emotions/Semantics
 - Counts of Emojis 
 - Set-up Sentences
@@ -36,13 +70,3 @@ https://pan.webis.de/clef22/pan22-web/author-profiling.html
 - Proportion of capital letters per word - Capture ThIs SpEaCh
 - Label each sentence and set a threshold for Irony spreads
 - Unexpectedness
-
-## Possible Literature:
-- https://dl.acm.org/doi/epdf/10.1145/2930663 (Irony Detection in Twitter)
-- 
-
-### Interesting Tools:
-- https://github.com/twintproject/twint
-
-### Google Docs:
-- https://docs.google.com/document/d/1gfvLkT3j-7GNFuwSzb1rLRq5NNAaPcGRwPfgnSKnpOc/edit?usp=sharing

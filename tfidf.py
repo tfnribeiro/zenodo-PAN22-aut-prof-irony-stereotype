@@ -1,10 +1,15 @@
 import numpy as np
+from tempfile import mkdtemp
+import os.path as path
 from utils import *
 
 class tfidf:
     def __init__(self, corpus, terms_filter=None, lowercase=False, authors_document=False) -> None:
         """
+            corpus = List of Lists with tweets
             terms_filter = set() of reduced words, can be emojis for istance.
+            lowercase (bool) sets the tweets to lowercase
+            authors_document uses each author as a document
         """
         self.lowercase = lowercase
         if self.lowercase:
@@ -37,8 +42,12 @@ class tfidf:
                             self.n_terms += 1
 
         self.index_to_term = {v:k for k,v in self.idf_terms.items()}
-
-        self.idf_matrix = np.zeros((self.n_documents, len(self.idf_terms.keys())),dtype=bool)
+        try:
+            self.idf_matrix = np.zeros((self.n_documents, len(self.idf_terms.keys())),dtype=bool)
+        except MemoryError:
+            print("WARNING: Not enough memory to create idf matrix, using disk.")
+            mem_file = path.join(mkdtemp(), 'tf_idf.dat')
+            self.idf_matrix = np.memmap(mem_file, dtype='bool', mode='w+', shape=(self.n_documents, len(self.idf_terms.keys())))
 
         document_i = 0
         for author in corpus:
@@ -51,10 +60,14 @@ class tfidf:
             if self.authors_document:
                 document_i += 1
         
-        # 1 x d
+        # 1 x d, term_idf vector
         self.term_idf = np.log2(self.n_documents / (np.sum(self.idf_matrix, axis=0)))
 
     def tf(self, author):
+        """
+            Calculate term frequency for a specific author.
+            Returns the TF count matrix.
+        """
         if self.lowercase:
             author = np.char.lower(author)
         if self.authors_document:
@@ -80,6 +93,9 @@ class tfidf:
         return tf_matrix
     
     def tf_idf(self, author):
+        """
+            Uses the TF count matrix to generate the average TF-IDF vector.
+        """
         if self.lowercase:
             author = np.char.lower(author)
         tf_vector = self.tf(author)
