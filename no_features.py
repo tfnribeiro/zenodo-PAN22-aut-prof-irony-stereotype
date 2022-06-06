@@ -42,7 +42,7 @@ def most_important_features(X_features, initial_feature_names):
     plt.ylabel('Accumulated projected variance')
     plt.title('Cummulative valriance of norm data')
     plt.show()
-    '''
+    
     
     n_pcs= fit.components_.shape[0]
 
@@ -51,6 +51,17 @@ def most_important_features(X_features, initial_feature_names):
 
     #order the features
     ordered_feature_names = [initial_feature_names[ordered[i]] for i in range(n_pcs)]
+    '''
+    #n_pcs= len(initial_feature_names)#fit.components_.shape[0]
+    averaged = np.mean(fit.components_, axis = 0)
+    # get the index of the most important feature on each component
+    #ordered = [np.abs(fit.components_[i]).argmax() for i in range(n_pcs)]
+    print("average", averaged)
+    name_dict = {}
+    for i, key in enumerate(initial_feature_names):
+        name_dict[key] = averaged[i]
+
+    ordered_feature_names = dict(sorted(name_dict.items(), key=lambda x:x[1])).keys()
 
     #print(most_important_names)
     return ordered_feature_names
@@ -61,7 +72,7 @@ if __name__ == "__main__":
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     # make_pipeline(StandardScaler(), LogisticRegression()) RandomForestClassifier()
-    forest , emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, X_train_features = cm.train_model(X_train, y_train, make_pipeline(StandardScaler(), LogisticRegression()))
+    forest , emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, X_train_features = cm.train_model(X_train, y_train, svm.SVC(gamma="auto"))# make_pipeline(StandardScaler(), LogisticRegression()))
     
     X_test_features = cm.get_features_test(X_test,emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
     predict = forest.predict(X_test_features)
