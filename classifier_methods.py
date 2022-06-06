@@ -7,7 +7,6 @@ from sklearn.decomposition import PCA, SparsePCA
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import f1_score
 from sklearn import svm
-from torch import embedding
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
