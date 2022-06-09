@@ -1,5 +1,5 @@
 # Remove .csv cache files
-*.csv
+CACHE/
 
 # OUTPUT 
 OUTPUT/
