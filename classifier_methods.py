@@ -866,7 +866,7 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
                         print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
 
                     if one_nn:
-                        clf_nn1 = KNeighborsClassifier(n_neighbors=1)
+                        clf_nn1 = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=1))
                         clf_nn1.fit(X_train, y_train)
                         y_test_pred, y_train_pred = clf_nn1.predict(
                             X_test), clf_nn1.predict(X_train)
@@ -881,7 +881,7 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
                         print(f"1-NN (Test)     : {acc_test:.4f}")
 
                     if three_nn:
-                        clf_nn3 = KNeighborsClassifier(n_neighbors=3)
+                        clf_nn3 = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=3))
                         clf_nn3.fit(X_train, y_train)
                         y_test_pred, y_train_pred = clf_nn3.predict(
                             X_test), clf_nn3.predict(X_train)
@@ -896,7 +896,7 @@ def cross_validate_tune_params(X, y, split_n=7, emoji_pca_dim=[5], profanity_pca
                         print(f"3-NN (Test)     : {acc_test:.4f}")
 
                     if five_nn:
-                        clf_nn5 = KNeighborsClassifier(n_neighbors=5)
+                        clf_nn5 = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5))
                         clf_nn5.fit(X_train, y_train)
                         y_test_pred, y_train_pred = clf_nn5.predict(
                             X_test), clf_nn5.predict(X_train)
