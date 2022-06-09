@@ -15,6 +15,9 @@ from lexical_comp import *
 from sent_polarity import *
 from punctuation import *
 from tqdm import tqdm
+import pandas as pd
+from sklearn.inspection import permutation_importance
+import matplotlib.pyplot as plt
 import os
 
 
@@ -483,6 +486,8 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
         svm_list = []
         f1_svm_list = []
 
+    importance_mean  = dict()
+    importance_std = dict()
     stop_w = stopwatch()
     kf = KFold(n_splits=split_n)
     print(f"Performing Cross-Validation...")
@@ -527,6 +532,8 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
         X_test = np.concatenate((pos_features[test_index], count_features[test_index], sent_features[test_index], sep_punct_features[test_index],
                                   lix_features[test_index], emoji_features_test, profanity_features_test, word_features_test), axis=1)
 
+        #print("Word features shape: ", word_features_train.shape)
+
         if rdmforest:
             clf_rfc = RandomForestClassifier()
             clf_rfc.fit(X_train, y_train)
@@ -542,7 +549,10 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
 
             print(f"Random Forest Classifier acc (Train): {acc_train:.4f}")
             print(f"Random Forest Classifier acc (Test): {acc_test:.4f}")
-
+            #feature importance
+            perm_tree = permutation_importance(clf_rfc, X_test, y_test, n_repeats=5, n_jobs=5)
+            importance_mean["RandomForest"] = importance_mean.get("RandomForest", 0) + perm_tree.importances_mean
+            importance_std["RandomForest"] = importance_std.get("RandomForest", 0) + perm_tree.importances_std
         if one_nn:
             clf_nn1 =make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=1))
             clf_nn1.fit(X_train, y_train)
@@ -557,6 +567,11 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
             print(f"1-NN acc (Train): {acc_train:.4f}")
             print(f"1-NN (Test)     : {acc_test:.4f}")
 
+            #feature importance
+            perm_nn1 = permutation_importance(clf_nn1, X_test, y_test, n_repeats=5, n_jobs=5)
+            importance_mean["1-NN"] = importance_mean.get("1-NN", 0) + perm_nn1.importances_mean
+            importance_std["1-NN"] = importance_std.get("1-NN", 0) + perm_nn1.importances_std
+
         if three_nn:
             clf_nn3 = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=3))
             clf_nn3.fit(X_train, y_train)
@@ -570,6 +585,10 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
                 f1_score(y_test, y_test_pred, average='weighted'))
             print(f"3-NN acc (Train): {acc_train:.4f}")
             print(f"3-NN (Test)     : {acc_test:.4f}")
+            #feature importance
+            perm_nn3 = permutation_importance(clf_nn3, X_test, y_test, n_repeats=5, n_jobs=5)
+            importance_mean["3-NN"] = importance_mean.get("3-NN", 0) + perm_nn3.importances_mean
+            importance_std["3-NN"] = importance_std.get("3-NN", 0) + perm_nn3.importances_std
 
         if five_nn:
             clf_nn5 = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5))
@@ -584,6 +603,11 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
                 f1_score(y_test, y_test_pred, average='weighted'))
             print(f"5-NN acc (Train): {acc_train:.4f}")
             print(f"5-NN (Test)     : {acc_test:.4f}")
+
+            #feature importance
+            perm_nn5 = permutation_importance(clf_nn5, X_test, y_test, n_repeats=5, n_jobs=5)
+            importance_mean["5-NN"] = importance_mean.get("5-NN", 0) + perm_nn5.importances_mean
+            importance_std["5-NN"] = importance_std.get("5-NN", 0) + perm_nn5.importances_std
 
         if svm_cls:
             pipe_svm = make_pipeline(StandardScaler(), svm.SVC(gamma="auto"))
@@ -600,6 +624,11 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
             print(f"SVM (Train): {acc_train:.4f}")
             print(f"SVM (Test) : {acc_test:.4f}")
 
+            #feature importance
+            perm_svm = permutation_importance(pipe_svm, X_test, y_test, n_repeats=5, n_jobs=5)
+            importance_mean["SVM"] = importance_mean.get("SVM", 0) + perm_svm.importances_mean
+            importance_std["SVM"] = importance_std.get("SVM", 0) + perm_svm.importances_std
+
         if log_cls:
             pipe_log = make_pipeline(StandardScaler(), LogisticRegression())
             pipe_log.fit(X_train, y_train)
@@ -614,39 +643,119 @@ def cross_validate(X, y, split_n=7, emoji_pca_dim=4, profanity_pca_dim=14, word_
             print(f"Log-Reg (Train): {acc_train:.4f}")
             print(f"Log-Reg (Test) : {acc_test:.4f}")
 
+            #feature importance
+            perm_log = permutation_importance(pipe_log, X_test, y_test, n_repeats=5, n_jobs=5)
+            importance_mean["LogRegression"] = importance_mean.get("LogRegression", 0) + perm_log.importances_mean
+            importance_std["LogRegression"] = importance_std.get("LogRegression", 0) + perm_log.importances_std
+
     acc_dict = {}
     f1_dict = {}
+    
+    feature_names = [ 
+    "ADJ","ADP","ADV","CONJ","DET",
+    "NUM","PRT","PRON","VERB",
+    "auth_vocabsize","type_token_rt","avg_author_word_length","avg_tweet_length","avg_author_hashtag_count",
+    "avg_author_usertag_count","avg_author_urltag_count","author_avg_emoji","avg_capital_lower_ratio",
+    "pos", "neut", "neg", "compound",
+    "mult-ex", "mult-qu", "mult-pe", "quote", "ex", "qu", "pe",
+    "LiXScore",
+    "emoji_pca_1", "emoji_pca_2", "emoji_pca_3", "emoji_pca_4",
+    "profanity_pca_1", "profanity_pca_2", "profanity_pca_3", "profanity_pca_4", "profanity_pca_5", 
+    "profanity_pca_6","profanity_pca_7", "profanity_pca_8","profanity_pca_9","profanity_pca_10",
+    "profanity_pca_11","profanity_pca_12","profanity_pca_13","profanity_pca_14",
+    "word_pca1","word_pca2","word_pca3", "word_pca4", "word_pca5", "word_pca6", "word_pca7", "word_pca8",
+    "word_pca9", "word_pca10", "word_pca11", "word_pca12", "word_pca13", "word_pca14","word_pca15","word_pca16",
+    "word_pca17", "word_pca18" , "word_pca19", "word_pca20"
+    ]
+    
+    #feature_names = np.arange(0, X_train.shape[1])
+
+    
 
     if rdmforest:
         random_forest_list = np.array(random_forest_list)
         f1_random_forest_list = np.array(f1_random_forest_list)
         acc_dict['RandomForest'] = random_forest_list
         f1_dict['RandomForest'] = f1_random_forest_list
+
+        importances = pd.Series(importance_mean["RandomForest"]/split_n, index=feature_names)
+        fig, ax = plt.subplots()
+        importances.plot.bar(yerr=importance_std["RandomForest"]/split_n, ax=ax)
+        ax.set_title("Feature importances using permutation on full model (random Forests)")
+        ax.set_ylabel("Mean accuracy decrease")
+        fig.tight_layout()
+        plt.show()
+
     if one_nn:
         one_nn_list = np.array(one_nn_list)
         f1_one_nn_list = np.array(f1_one_nn_list)
         acc_dict['1-NN'] = one_nn_list
         f1_dict['1-NN'] = f1_one_nn_list
+
+        importances = pd.Series(importance_mean["1-NN"]/split_n, index=feature_names)
+        fig, ax = plt.subplots()
+        importances.plot.bar(yerr=importance_std["1-NN"]/split_n, ax=ax)
+        ax.set_title("Feature importances using permutation on full model (1-NN)")
+        ax.set_ylabel("Mean accuracy decrease")
+        fig.tight_layout()
+        plt.show()
+
     if three_nn:
         three_nn_list = np.array(three_nn_list)
         f1_three_nn_list = np.array(f1_three_nn_list)
         acc_dict['3-NN'] = three_nn_list
         f1_dict['3-NN'] = f1_three_nn_list
+
+        importances = pd.Series(importance_mean["3-NN"]/split_n, index=feature_names)
+        fig, ax = plt.subplots()
+        importances.plot.bar(yerr=importance_std["3-NN"]/split_n, ax=ax)
+        ax.set_title("Feature importances using permutation on full model (3-NN)")
+        ax.set_ylabel("Mean accuracy decrease")
+        fig.tight_layout()
+        plt.show()
+
     if five_nn:
         five_nn_list = np.array(five_nn_list)
         f1_five_nn_list = np.array(f1_five_nn_list)
         acc_dict['5-NN'] = five_nn_list
         f1_dict['5-NN'] = f1_five_nn_list
+
+        importances = pd.Series(importance_mean["5-NN"]/split_n, index=feature_names)
+        fig, ax = plt.subplots()
+        importances.plot.bar(yerr=importance_std["5-NN"]/split_n, ax=ax)
+        ax.set_title("Feature importances using permutation on full model (5-NN)")
+        ax.set_ylabel("Mean accuracy decrease")
+        fig.tight_layout()
+        plt.show()
+
     if log_cls:
         log_reg_list = np.array(log_reg_list)
         f1_log_reg_list = np.array(f1_log_reg_list)
         acc_dict['LogRegression'] = log_reg_list
         f1_dict['LogRegression'] = f1_log_reg_list
+
+        importances = pd.Series(importance_mean["LogRegression"]/split_n, index=feature_names)
+        fig, ax = plt.subplots()
+        importances.plot.bar(yerr=importance_std["LogRegression"]/split_n, ax=ax)
+        ax.set_title("Feature importances using permutation on full model (Log-Reg)")
+        ax.set_ylabel("Mean accuracy decrease")
+        fig.tight_layout()
+        plt.show()
+
     if svm_cls:
         svm_list = np.array(svm_list)
         f1_svm_list = np.array(f1_svm_list)
         acc_dict['SVM'] = svm_list
         f1_dict['SVM'] = f1_svm_list
+
+        importances = pd.Series(importance_mean["SVM"]/split_n, index=feature_names)
+        fig, ax = plt.subplots()
+        importances.plot.bar(yerr=importance_std["SVM"]/split_n, ax=ax)
+        ax.set_title("Feature importances using permutation on full model (SVM)")
+        ax.set_ylabel("Mean accuracy decrease")
+        fig.tight_layout()
+        plt.show()
+        
 
     return acc_dict, f1_dict
 
