@@ -8,6 +8,7 @@ import numpy as np
 import glob
 import re
 from xml.etree import ElementTree as ET
+from io import StringIO
 from timeit import default_timer as timer
 from datetime import datetime, timedelta
 
@@ -45,6 +46,16 @@ def tokenize_tweet(tweet_to_tokenize, as_list=False):
     if as_list:
         return tknzr.tokenize(tweet_to_tokenize)
     return " ".join(tknzr.tokenize(tweet_to_tokenize))
+
+def get_corpus(list_of_authors):
+    """
+        Returns the corpus as a single string.
+    """
+    buf = StringIO()
+    for author in list_of_authors:
+        for tweet in author:
+            buf.write(tweet + " ")
+    return buf.getvalue()
 
 def tweet_to_wordlist(tweet):
     tweet = tweet.encode("ascii", "ignore").decode()

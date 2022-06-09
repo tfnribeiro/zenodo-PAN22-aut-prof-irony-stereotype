@@ -1,20 +1,20 @@
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.decomposition import PCA, SparsePCA
+from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import f1_score
 from sklearn import svm
 from pos_counts import *
 from count_features import *
 from lexical_comp import *
-from word_emb import * 
+# Comment out for word embeddings
+# from word_emb import * 
 from sent_polarity import *
 from punctuation import *
 from tqdm import tqdm
-import pandas as pd
 import os
 
 

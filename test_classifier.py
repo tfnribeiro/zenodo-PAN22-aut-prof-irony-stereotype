@@ -1,5 +1,6 @@
 from classifier_methods import *
 from utils import * 
+from sklearn.model_selection import train_test_split
 import json
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
@@ -47,13 +48,26 @@ def tune_params():
     print("Acc: ", sum(predictions==y_test)/len(y_test))
 
 
-# acc, f1 = cross_validate(X_train, y_train)
-rfc_predictions, _, rfc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
-svmc_predictions, _, svmc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), svm.SVC(gamma="auto")), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
-logregc_predictions, _, logregc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), LogisticRegression()), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", supress_prints_flag=False)
+#acc, f1 = cross_validate(X_train, y_train)
+#print_dictionaries_cross_validate(acc, f1)
 
+rfc, *settings = train_model(X_train, y_train, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
+X_test_features = get_features_test(X_test, *settings)
+
+#svmc_predictions, _, svmc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), svm.SVC(gamma="auto")), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
+#logregc_predictions, _, logregc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), LogisticRegression()), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
+rfc_predictions_prob = rfc.predict_proba(X_test_features)
+rfc_predictions = rfc.predict(X_test_features)
+error_mask = y_test!=rfc_predictions
+print(y_test[error_mask])
+print(rfc_predictions_prob[error_mask])
 #
-#print(f1_score(y_test, predictions, average="weighted"))
+# print("Random Forest Prediction: ")
+# print("Acc:", (y_test==rfc_predictions).sum()/len(y_test), " | F1: ", f1_score(y_test, rfc_predictions, average="weighted"))
+# print("SVM Prediction: ")
+# print("Acc:", (y_test==svmc_predictions).sum()/len(y_test), " | F1: ", f1_score(y_test, svmc_predictions, average="weighted"))
+# print("Log Reg Prediction")
+# print("Acc:", (y_test==logregc_predictions).sum()/len(y_test), " | F1: ", f1_score(y_test, logregc_predictions, average="weighted"))
 
 # x_train, emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf = get_features_train(X)
 
