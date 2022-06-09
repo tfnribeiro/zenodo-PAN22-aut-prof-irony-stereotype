@@ -1,6 +1,9 @@
 from classifier_methods import *
 from utils import * 
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import heapq
+from scipy.special import softmax
 import json
 
 X, y, USERCODE_X, lang = load_dataset(os.path.join(os.getcwd(),"data","en"))
@@ -54,10 +57,61 @@ def tune_params():
 rfc, *settings = train_model(X_train, y_train, classifier_class=RandomForestClassifier(), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
 X_test_features = get_features_test(X_test, *settings)
 
+log_reg, *settings = train_model(X_train, y_train, classifier_class=make_pipeline(StandardScaler(), LogisticRegression()), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
+
 #svmc_predictions, _, svmc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), svm.SVC(gamma="auto")), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
 #logregc_predictions, _, logregc = generate_features_train_predict(X_train, y_train, X_test, classifier_class=make_pipeline(StandardScaler(), LogisticRegression()), emoji_pca_dim=4, profanity_pca_dim=14, word_pca_dim=20, label="Test", verbose=False)
+feature_names = [ 
+    "ADJ","ADP","ADV","CONJ","DET",#"NOUN",
+    "NUM","PRT","PRON","VERB",
+    #"PUNCT",
+    #"UNK",
+    "auth_vocabsize","type_token_rt","avg_author_word_length","avg_tweet_length","avg_author_hashtag_count",
+    "avg_author_usertag_count","avg_author_urltag_count","author_avg_emoji","avg_capital_lower_ratio",
+    "pos", "neut", "neg", "compound",
+    "mult-ex", "mult-qu", "mult-pe", "quote", "ex", "qu", "pe",
+    "LiXScore",
+    "emoji_pca_1", "emoji_pca_2", "emoji_pca_3", "emoji_pca_4",
+    "profanity_pca_1", "profanity_pca_2", "profanity_pca_3", "profanity_pca_4", "profanity_pca_5", 
+    "profanity_pca_6","profanity_pca_7", "profanity_pca_8","profanity_pca_9","profanity_pca_10",
+    "profanity_pca_11","profanity_pca_12","profanity_pca_13","profanity_pca_14",
+    "word_pca1","word_pca2","word_pca3", "word_pca4", "word_pca5", "word_pca6", "word_pca7", "word_pca8",
+    "word_pca9", "word_pca10", "word_pca11", "word_pca12", "word_pca13", "word_pca14","word_pca15","word_pca16",
+    "word_pca17", "word_pca18" , "word_pca19", "word_pca20"
+    ]
+
+softmax_coef = softmax(log_reg[1].coef_[0])
+heap = []
+for i in range(len(feature_names)):
+    heapq.heappush(heap, ((softmax_coef[i],feature_names[i])))
+scores, words = [s for (s,w) in heapq.nlargest(40,heap)], [w for (s,w) in heapq.nlargest(40,heap)]
+plt.bar(words, scores)
+plt.title("Top Words Summing PCA weights (70%) train data")
+plt.ylabel("Weight Summed (Softmaxed)")
+plt.xticks(words, rotation=90)
+plt.tight_layout()
+plt.show()
+
+pca_words = settings[2]
+tf_idf_words = settings[5]
+heap_word = []
+zero_pca = np.zeros(len(pca_words.components_[0]))
+for pca_vec in pca_words.components_:
+    softmax_pca_vec = softmax(pca_vec)
+    zero_pca += softmax_pca_vec
+for i in range(len(softmax_pca_vec)):
+    heapq.heappush(heap_word, ((softmax_pca_vec[i],tf_idf_words.word_dict[i])))
+scores, words = [s for (s,w) in heapq.nlargest(40,heap_word)], [w for (s,w) in heapq.nlargest(40,heap_word)]
+plt.bar(words, scores)
+plt.title("Top Words Summing PCA weights (70%) train data")
+plt.ylabel("Weight Summed (Softmaxed)")
+plt.xticks(words, rotation=90)
+plt.tight_layout()
+plt.show()
+
 rfc_predictions_prob = rfc.predict_proba(X_test_features)
 rfc_predictions = rfc.predict(X_test_features)
+
 error_mask = y_test!=rfc_predictions
 print(y_test[error_mask])
 print(rfc_predictions_prob[error_mask])

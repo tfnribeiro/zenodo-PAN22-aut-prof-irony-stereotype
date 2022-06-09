@@ -73,10 +73,10 @@ if __name__ == "__main__":
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
     # make_pipeline(StandardScaler(), LogisticRegression()) RandomForestClassifier() make_pipeline(StandardScaler(), svm.SVC(gamma="auto"))
-    forest , emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf, X_train_features = cm.train_model(X_train, y_train, make_pipeline(RandomForestClassifier()))
+    forest , *settings, X_train_features = cm.train_model(X_train, y_train, make_pipeline(RandomForestClassifier()))
 
     
-    X_test_features = cm.get_features_test(X_test,emoji_pca, profanity_pca, word_pca, emoji_tfidf, profanity_tfidf, words_tfidf)
+    X_test_features = cm.get_features_test(X_test, *settings)
     predict = forest.predict(X_test_features)
     print((y_test==predict).sum()/len(y_test))
     start_time = time.time()
