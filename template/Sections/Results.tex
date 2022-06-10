@@ -1,0 +1,72 @@
+We find that all classifiers except NN perform better than the baseline in both cross validation and on the test data we separated from the training data. \par
+
+\begin{table*}[!h]
+    %\captionsetup{font=footnotesize}
+    %\footnotesize
+    \centering
+    %\rowcolors{1}{}{white}
+    \begin{tabular}{ll|ll}
+    \toprule
+      & \textbf{Train} & \textbf{Test} &  \\
+      \textbf{Classifier} & \textbf{Accuracy (\%)} & \textbf{Accuracy (\%)}  & \textbf{F1-Score (\%)}  \\
+    \midrule
+    (SD) Random Forest & \textbf{100} & \textbf{91.84} & \textbf{91.83} \\
+    (SD) Log. Reg. & 97.51 & 89.79 & 89.83 \\
+    (SD) SVM & 97.22 & 89.12 & 89.12 \\
+    (SD) 1-NN & \textbf{100} & 81.97 & 82.01 \\
+    (SD) 3-NN & 92.23 & 87.76 & 87.79\\
+    (SD) 5-NN & 88.83 & 82.65 & 85.71\\
+    (M) Random Forest & \textbf{100} & 91.50 & 91.49 \\
+    (M) SVM & 97.00 & 88.78 & 88.78 \\
+    (M) Log. Reg. & 97.78 & 90.14 & 90.16 \\
+    
+    \hline
+    Baseline (2-Char) & 85.09 & 82.65 & 82.39 \\
+    Baseline (3-Char) & 87.24 & 83.67 & 83.60 \\
+    Baseline (4-Char) & 87.24 & 84.35 & 84.36 \\
+    Baseline (5-Char) & 88.89 & 82.65 & 82.70 \\
+    \bottomrule
+    \end{tabular}
+   \caption{Cross-Validation on 70\% of the train data, n splits = 7. In bold, the best performing metrics. (M) denotes that the mean sentiment was used to combine the Tweet Sentiment, while (SD) denotes standard deviation was used.}
+    \label{tab:cross_validation_results}
+\end{table*}
+
+
+Our results show that only the 1-NN models does not outperform the baseline, tab. \ref{tab:cross_validation_results}. The best baseline model (4-Char) performs with an accuracy of 87.24\% on the training set and on the test set with an accuracy of \textbf{84.35\%}, an F1-score \textbf{84.36\%}. We see that the random forest classifier obtains the best results. It performs with 100\% accuracy on the train data and \textbf{91.84\%} accuracy with and a F1-Score of \textbf{91.83\%} during cross validation using standard deviation on the sentiment across a users tweets. The scores using the mean sentiment (M) per a users tweet performs a little lower on the test set but still over 91\%. The other models do not perform as well. Logistic regression and SVM still outperform the baseline models with over 89\% in both accuracy and F1-Score.
+
+Our models also outperform the best baseline when we trained on 70\% of the provided training data and tested on the remaining 30\%. The baseline model performs with an accuracy of \textbf{84.92\%} and an F1-score of \textbf{84.96\%}, see tab. \ref{tab:test_results}. All classifiers using our features, random forest, logistic regression, and SVM, outperform the baseline both using sentiment mean and SD. The best performing classifier is again random forest using SD for the sentiment with an accuracy and F1-score of \textbf{96.03\%} and \textbf{96.04\%} respectively. The same classifier using mean sentiment is close behind. Both logistic regression and SVM achieve accuracies and F1-scores above 90\%. Random forest is the best performing classifier in all cases. \par
+
+The results for the \textbf{tasks test dataset was an accuracy of 95.56\% }, using the Random Forest and averaging the sentiments in tweets with VADER [(M) Random Forest]. These results are similar to the performance of the same classifier on our 70/30 split of the training data (acc: 95.24\%, see tab. \ref{tab:test_results}). 
+
+It seems that the performance on the 30\% is a good indicator for performance on the official test set.
+
+\subsection{Feature Importance}\label{sec:feature_imp}
+We also discovered that not all features have the same importance, and that there are differences in their importance between classifiers. For that we used \verb'permutation_importance' from \verb'sklearn.inspection' \footnote{\url{https://scikit-learn.org/stable/modules/permutation\_importance.html}} to calculate the importance of each feature. This method calculates the influence of each feature has by comparing the original accuracy score with the score of obtained if different features are removed.  \par
+
+With the permutation importance we can see the importance of each feature for each classifier. For random forest \verb'avg_user_hashtag_count' and \verb'auth_vocabsize' seem to be the most important. While the other features have noticeable less influence, figure \ref{fig:fi_rf}. 1-NN is even more extreme. Here only \verb'avg_tweet_length' and \verb'LixScore' seem to be important, figure \ref{fig:fi_1NN}. Both logistic regression and SVM have the highest importance for \verb'word_pca11', \verb'auth_vocabsize' and \verb'qu' (average number of question marks), figure \ref{fig:fi_logreg} and \ref{fig:fi_svm}. For these classifiers, the importance of features are also more equally distributed than for the other classifiers especially 1-NN. We see that different features are more important than others for different classifiers and that logistic regression and SVM have generally a higher feature importance for each feature.
+
+
+\begin{table}[h]
+    %\captionsetup{font=footnotesize}
+    %\footnotesize
+    \centering
+    \small
+    %\rowcolors{1}{}{white}
+    \begin{tabular}{l|ll}
+    \toprule
+    \textbf{Classifier} & \textbf{Accuracy (\%)}  & \textbf{F1-Score (\%)}  \\
+    \midrule
+    (SD) Random Forest & \textbf{96.03} & \textbf{96.04} \\
+    (SD) Log. Reg. & 90.47  & 90.49 \\
+    (SD) SVM & 92.06 & 92.08 \\
+    (M) Random Forest & 95.24 & 95.25 \\
+    (M) Log. Reg. & 90.47  & 90.50 \\
+    (M) SVM & 92.06 & 92.08 \\
+    \hline
+    Baseline (4-Char) & 84.92 & 84.96 \\ 
+    \bottomrule
+    \end{tabular}
+   \caption{Test results on the remaining 30\% of the data. The baseline model is a 4-gram char BOW model followed by a SVM for classification. In bold, the best performing metrics.}
+    \label{tab:test_results}
+\end{table}
+

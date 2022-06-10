@@ -1,0 +1,28 @@
+
+\subsection{Irony and sarcasm}
+The most common definition of verbal irony centers on the incongruity of the literal and intended meaning of an utterance \cite{reyes2012humor, attardo2000irony} for the purpose of expressing i.a. humor, sophistication, group affiliation or retractability \cite{attardo2000irony}. The latter two have a particular relevance to irony and stereotype spreaders, as irony can provide a cover of plausible deniability for offensive utterances and help identify like-minded people \cite{greene2019deplorable}.
+
+The task authors, as well as some previous research \cite{sarcasm_detection}, identify sarcasm as a more aggressive and bitter subset of irony, even though the task does not require distinguishing between the two in classification. However, we can assume that irony in conjunction with stereotypes will often have a ridiculing and aggressive attitude towards the stereotyped groups and thus qualify as sarcasm. 
+
+
+\subsection{Irony and Sarcasm Detection}
+
+Despite the complexity of irony and sarcasm as linguistic phenomena, a large variety of methods have been developed to solve classification and disambiguation tasks related to them. 
+
+In their survey of sarcasm detection methods, \citeA{sarcasm_detection} distinguish two main types of methods. Rule-based methods identify indicators of sarcasm, for example hashtag sentiment \cite{maynard2014hashtag}, particular phrases \cite{Pathways_punct} or situation phrases containing words with incongruous sentiment \cite{sarcasm_detection}. Using the latter approach, \citeA{bharti2015rulebased} achieve a high F1-score of 0.90, but their method requires computationally intensive parsing and a more precise distinction between subtypes of irony and sarcasm.
+
+More popular are feature-based approaches using supervised learning algorithms \cite{sarcasm_detection}. The literature attests a wide variety of features. Bag-of-Words n-gram representations are most common for representing lexical information and some degree of context in irony detection \cite{reyes2012making, liebrecht2013perfect}, but recently probabilistic language models have also been used to this effect \shortcite{van2018exploring}. This is usually supplemented with a variety of stylistic features relating punctuation, emoji and hashtag use, as well as general stylistic features like type-token ratios and average word lengths \shortcite{sarcasm_detection, van2018exploring, davidov2010semi}.  Features related to POS-tags, affective features, and incongruous sentiment (either on a token or phrasal level) are also common \cite{riloff2013sarcasm, joshi2015harnessing,sarcasm_detection}. Word embeddings are the most widespread technique for encoding semantic similarity, particularly in deep-learning approaches, which have been gaining traction in the field \cite{joshi2016word, zhang2019irony}. 
+
+
+
+\subsection{Challenges}
+Identifying irony in textual media, and especially in microblog formats like tweets, is a difficult task because the incongruity it exploits is often  contextual and paralinguistic in nature \cite{sarcasm_detection}. For example, \textit{What lovely weather} may be an ironic utterance in a downpour, but it is not immediately identifiable as such in isolation \cite{ironydefinition}. In recent years, researchers have tried to incorporate topical and conversational context, in particular when dealing with data from social media or forums, into irony detection to improve classification \cite{ sarcasm_detection}. This could be incorporation of previous replies as a feature \cite{joshi2015harnessing, wallace2015sparse} or identifying topics that are most likely to elicit sarcasm \cite{wang2015twitter}.
+
+Another issue is that many markers of irony in spoken language, like pitch, nasalization and other spectral markers \cite{attardo2000irony, tepperman2006yeahright}, are not available in a textual modality. Punctuation, capitalization and emoji usage have been used as textual correlates of such markers \cite{irony_detect_twitter, van2018exploring}. Contextual information, as described above, can also be used to compensate for ``missing" irony cues in text.
+
+
+\subsection{Twitter as Data Source}
+
+Twitter is one of the most popular data sources in the field of irony and sarcasm detection \cite{sarcasm_detection,wang2015twitter, irony_detect_twitter}. The size of the social media platform, combined with the short format of the posts and its easy-to-use API make it an obvious choice for this type of research. 
+
+The most common and efficient way of annotating tweets for classification task is by scraping based on \emph{\#sarcasm} and  \emph{\#irony} hashtags \cite{reyes2012humor, liebrecht2013perfect} and assuming un-tagged tweets are non-ironic/sarcastic. This method has obvious downsides and tends to produce non-representative datasets that are easier to categorize than manually annotated tweet sets \cite{sarcasm_detection}. Because the data used in the present study are manually annotated, we might expect lower performance than we see in the literature. 

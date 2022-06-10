@@ -1,0 +1,146 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{graphicx}
+\graphicspath{ {./img/} } 
+\usepackage{fancyhdr}
+\usepackage{layout}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{titling}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{geometry}
+\usepackage{titling}
+\usepackage[numbers]{natbib}
+
+
+\newcommand{\subtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip0.5em}%
+}
+
+\title{Language Processing 2}
+\subtitle{Profiling Irony and Stereotype Spreaders on Twitter (IROSTEREO) 2022}
+\author{Tiago Filipe Nunes Ribeiro 
+    \\ \href{mailto:kfw323@alumni.ku.dk}{kfw323@alumni.ku.dk}
+     \and Kaja Seraphina Elisa Hano
+    \\ \href{mailto:ltk953@alumni.ku.dk}{ltk953@alumni.ku.dk}
+    \and Yana Nikolaeva Nikolova
+    \\ \href{mailto:xjv550@alumni.ku.dk}{xjv550@alumni.ku.dk}
+   }
+\date{April 2022}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+    This project aims to solve the task presented at PAN, Profiling Irony and Stereotype Spreaders on Twitter (IROSTEREO) 2022, which consists of given a set of English tweets determine if the author spreads irony and stereotypes. The authors of the task define sarcasm as an aggressive and scornful type of irony, but regular irony can still be used to target specific groups. The task aims to identify users that use irony to mask the intent to mock or scorn a victim.
+    
+    Considering that sarcasm is a more specific type of irony, we have started investigating possible ways of tackling this issue, by methods which have proven successful in previous tasks of detecting irony and sarcasm on Twitter. 
+    
+\section{Related Work}    
+As one of the largest text-based social media platforms, Twitter is a popular data source for text-based natural language tasks. Twitter data is mined for sentiment \cite{okazaki2015using}, novel expressions \cite{maybaum2013language} and other linguistic research \cite{wang2014cursing}, as well as for identifying hate and bullying for moderation purposes \cite{cyberbullying, waseem2016hateful}. In that vein, automating the identification of irony and stereotype spreaders could help improve user experience and minimize harassment and hateful messaging, especially since irony is used by some as a strategy to avoid conventional moderation \cite{greene2019deplorable}. 
+
+
+Identifying irony is a difficult task in part because of 
+
+\section{Data}
+
+The data provided by PAN consists of 420 XML files, where each file is named for the user ID and contains 200 tweets. The tweets are anonymized, so hashtag, user and url information is replaced by generic tags. Another file contains the author ID's and the ground truth labels -- either I (ironic) or NI (non-ironic). 
+
+%maybe move this paragraph somewhere else?
+This means that unlike most previous research that focuses on the tweet- or sentence-level sarcasm detection (reference), we are classifying sarcasm patterns on the user level. This is significant, as previous research (reference!) shows that the majority of hate speech is produced by a small minority of people. It might therefore be more effective to identify hateful users than individual utterances. 
+
+\subsection{Data Pre-Processing}
+Our pre-processing methods are dependent on which features are being generated. However, for most features we remove the tweeter handles from the tweets before processing them. These are then tokenized by the \emph{TweetTokenizer} provided by NLTK\footnote{\url{https://www.nltk.org/api/nltk.tokenize.casual.html}}. This is optimized to capture smileys and long words which are not standard English. 
+    
+\section{Features}
+    \subsection{TR - Count Features}
+        Our first approach was centered around creating features that represent the profile's style. To do this, we perform simple counts on each author which are then divided by the total number of tweets (200 in this task), these are the following: 
+        \begin{center}
+            \begin{tabular}{ l l } 
+             \textbf{Avg. Vocab Size:} & Number of unique tokens per tweet \\
+             \textbf{Avg. Token Number:}  & Number of tokens on average per tweet \\
+             \textbf{Vocab/Token Ratio:}  & Number of Vocab divided by tokens\\
+             \textbf{Avg. Tweet Length:} & Number of characters on average per tweet\\
+             \textbf{Avg. HASHTAG Counts} & Number of HASHTAGs on average per tweet\\
+             \textbf{Avg. USERTAG Counts} & Number of USERTAGs on average per tweet\\
+             \textbf{Avg. URL Counts } & Number of URLs on average per tweet \\
+             \textbf{Avg. Emoji Counts } & Number of Emojis on average per tweet\\
+             \textbf{Avg. Capital/Lower Case Ratio} & Ratio between upper and lower case per tweet\\
+            \end{tabular}
+        \end{center}
+        The intuition about these features is to portray some of the main trends between the user-profiles. We would expect, for instance, that ironic users would have shorter tweet length and vocab sizes when compared with non-ironic users. These differences should be captured by these features. Structural features have also been used before in similar tasks \cite{irony_detect_twitter}.
+        All tags have been removed by generic markers for each one, but previous datasets have been built by finding tweets marked with \emph{#sarcasm} or \emph{#irony}, so we believe these counts would still be relevant for this task \cite{sarcasm_detection}.
+        
+    \subsection{TR - LiX Score}
+        LiX score was developed in Sweden (Bjõrgsen, 1968) and it found that the predictors of complexity were word factor and a sentence factor. Lix is given by the following formula: 
+        $$ Lix = (\% N_{Long Words}) + (N_{words}/N_{sentence}) $$
+        
+        I have given the threshold for long words to be $t=7$, which follows the suggestion for word length in \cite{lix_score}, and I count the number of sentences by using a regular expression to match the following regular expression pattern: \verb'[ ]+[.;?!]|[.;?!][ ]+|[.;?!]\n', this will consider a sentence any endings on punctuation or followed by a new line. There might be a risk of underestimating sentences which terminate in \emph{...}, but when analysing the resulting statistics of the formula on our dataset: $\mu = 33.3; \sigma = 6.3; max=61.6; min=16.7$, which corresponds to an average of a 7th grader lexical complexity, which seems adequate for a social media.
+        
+        Our intention with this metric is to model that Ironic profiles might use less complex structures to reach a wider audience and easier to understand tone.
+        
+        MAYBE CHECK REFERENCE 
+        
+    \subsection{TR - TF-IDF}
+        Words frequencies have been used to model sarcasm \cite{sarcasm_detection}, which makes intuitive sense that certain words might be indicative of a joke in particular contexts. To model this problem, we attempted the Term-Frequency-Inverted-Document-Frequency (TF-IDF).
+        
+        TF-IDF is a method that models the concept that features (word, emoji,...) that are rare in a corpus might contain more information if they appear in a specific document. For this task, we have implemented this by allowing a flag to be switched to consider a tweet a document or an author a document. This has different implications, if using the author as document flag, we consider features which are not used by most users to be the most important, while if we use tweet level documents, the weight is on a tweet level.
+        
+        There are some considerations to make when it comes to counting the words in a tweet, and normalizing it by its' size. For our implementation, we are using the $log_2$ scale, which means that eventually more counts contribute less and less.
+        
+        IDF is calculated by first creating an encoding vector, where each position corresponds to a feature in the corpus and we then count in how many documents the feature occurs in the corpus. We then can calculate the $idf$ vector: $idf=log_2(\frac{N}{n_t})$, $N$ is the number of document and $n_t$ is the number of documents where $t$ occurs. Note, that we don't smooth out the  division, as we only consider terms which are present in the corpus. The term $tf$ is calculated by counting the number of terms which are present in the $idf$ vector, of size $m$, for each tweet and this is then saved into a matrix of size $\text{documents} \times m$. We then want to ensure that terms are scaled to a logarithmic scale, and to do this we perform the following operation on the matrix:
+        \begin{equation*}
+            \begin{cases}
+              0, tf=0\\
+              1+log_2(tf), tf>0\\
+            \end{cases}
+        \end{equation*}
+        We then multiply each of the document vectors by the $idf$ to obtain the final $tf-idf$ vector for a specific author. In the case of using tweets as document, we obtain the average tweet $tf-idf$ vector for each author. Through experimentation we have found that tweets as documents tend to perform better. 
+        
+    \subsection{TR - POS Tags}
+        To obatain the POS tags decided to use the \emph{Universal Part-of-Speech Tagset}, whcih is described in the NLTK's documentation\footnote{\url{https://www.nltk.org/book/ch05.html#tab-universal-tagset}}. These consists of 12 different features which are counter across each author, after tokenization and removal of tweeter tags, averaged to obtain the average POS counts for each author. Some parts of speech tag like ADVs and ADJs have been shown to be lexical markers for irony \cite{irony_detect_twitter}.
+    
+    \subsection{Sentiment Analysis}
+        Irony can be used to attribute a sentiment value towards a specific target \cite{irony_detect_twitter}, and so we would imagine that this would also be a feature that helps distinguish an Ironic user from Not-Ironic one.
+        For this feature we used the framework \emph{VADER-Sentiment-Analysis}\footnote{\url{https://github.com/cjhutto/vaderSentiment}}, which is a lexicon and rule based sentiment analysis tool which returns 4 features: \emph{positive}, \emph{negative}, \emph{neutral} and \emph{compound} values. The latter is a combination of all previous 3. 
+        
+        Initially, we attempted to model the sentiment by calculating a metric which would attempt to count the number of sentences which would have high polarity in sentiment (high values in both positive and negative sentiment). However, this method seem to filter out too much information and the results weren't too promising.
+        
+        For this reason, we decided to instead calculate sentiment for each tweet and average the overall sentiments per author and use those values in the final feature vector for classification. We would imagine that Ironic authors would have on average more compound, positive and negative sentiment than their non-ironic counterparts.
+        
+    \subsection{KH - Punctuation}
+    We also included punctuation as a feature. These are features used for irony detection as in \cite{Pathways_punct}. We separated each type of common multiple punctuation such as \textbf{!!!}, \textbf{???} and \textbf{...} as well as quotation marks and single punctuation. I filtered these patterns by using the the python regular expression library re.
+    
+    \subsection{KH - Misspelling}
+    We thought that misspelling might be a good indicator of irony. By using PySpellcheck I found the misspelled words and set them in relation to the total number of words. However, it seems that the results greatly overlap for both classes and it is not a very practical feature for the classification. Because the misspellings did not add significant information, we did not use this feature out for our model training.
+    
+    \subsection{YN - Profanity}
+    
+    
+    \subsection{Feature Importance}
+    As we had a great number of features we wanted to see which features are the most important. We used PCA to check for the explained variance of the features and also some sklearn functions to check for the feature importance for each ML method.
+    % Use cross validation with the permutation_importance to average out the importance of different features
+    % This is because different splits cause different features to be less or more important. 
+    
+    \subsection{Methods}
+    % Split the Train into 70% train and 30% test, and we do cross validation to 
+    % - Tune parameters (PCA)
+    % - STD / mean in Sentiment (etc)
+    % Test on the 30% which the model hasn't seen to estimate performance.
+    % Show cross validation results
+    \subsection{Results}
+    % Show the test results
+    % Table of the performance of the different models, CV values and test scores 
+    \bibliography{source.bib} 
+    \bibliographystyle{apalike}
+    
+
+\end{document}

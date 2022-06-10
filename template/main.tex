@@ -1,0 +1,100 @@
+\documentclass[11pt]{article}
+\usepackage{acl2015}
+\usepackage{times}
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{subcaption} %For subtables and subfigures
+\usepackage[justification=centering]{caption} %This centers captions in figures
+\usepackage{chngcntr} %This package is used for the counterwithin commands
+\usepackage{fancyhdr}%This package controls header and footer latyout
+\usepackage[table]{xcolor}  %For coloring rows in tables
+%\usepackage[style = authoryear]{biblatex}
+\usepackage{multirow}
+\usepackage{tabularx} %For automatically adjusting column width
+\usepackage{tabulary,booktabs} %Similar
+\usepackage{ragged2e} %for making tables prettier
+\usepackage{changepage} %For indenting paragraphs
+\usepackage{multicol}
+\usepackage{appendix}
+\usepackage{csquotes}
+\usepackage{caption}
+
+
+\usepackage{apacite} %For citing APAstyle
+
+%\newread\tmp
+\newcommand{\charactercount}[1]{
+\immediate\write18{
+    expr `texcount -1 -sum -merge #1.tex` + `texcount -1 -sum -merge -char #1.tex` - 1 
+    > chars.txt
+}\input{chars.txt}}
+%\setlength\titlebox{5cm}
+
+% You can expand the titlebox if you need extra space
+% to show all the authors. Please do not make the titlebox
+% smaller than 5cm (the original size); we will check this
+% in the camera-ready version and ask you to change it back.
+
+
+\title{Profiling Irony and Stereotype Spreaders on Twitter (IROSTEREO) 2022}
+
+
+
+\author{Tiago Filipe Nunes Ribeiro \\
+  {\tt{kfw323@alumni.ku.dk}}\\\And
+  Yana Nikolova \\
+  {\tt{xjv550@alumni.ku.dk}} \\\And
+  Kaja Seraphina Elisa Hano\\
+  \tt{ltk953@alumni.ku.dk} \\}
+
+
+\date{April 2022}
+
+
+\date{}
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+We present a model for classifying irony and stereotype spreaders on Twitter based on the dataset provided for the PAN task IROSTEREO 2022 for this purpose. We take a feature engineering approach focusing on lexical and stylistic features and improve on the character n-gram baseline by 11\% for cross-validation on the train set. Of the classification algorithms considered, we find that the Random Forest classifier performs the best, achieving a final F1-score of 96.04\% with a 70/30 split on the train set and a final accuracy of 95.56\% on the test data provided by PAN for the task.
+\end{abstract}
+
+%This text contains \charactercount{main} characters.
+
+%Allowed: 48000
+
+\section{Introduction}
+\input{Sections/Introduction}
+
+\section{Related Work}
+\input{Sections/Related_work}
+
+\section{Data}
+\input{Sections/Data}
+
+\section{Features}
+\input{Sections/Features}
+
+\section{Methods}
+\input{Sections/Methods}
+
+\section{Results}
+\input{Sections/Results}
+
+\section{Discussion}
+\input{Sections/Discussion}
+
+\section{Conclusion}
+\input{Sections/Conclusion}
+
+\bibliographystyle{apacite}
+\bibliography{source}
+
+\clearpage
+\input{Sections/Appendix}
+
+\end{document}

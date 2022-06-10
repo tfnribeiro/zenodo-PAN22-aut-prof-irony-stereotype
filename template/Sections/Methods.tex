@@ -1,0 +1,25 @@
+    % Split the Train into 70% train and 30% test, and we do cross validation to 
+    % - Tune parameters (PCA)
+    % - STD / mean in Sentiment (etc)
+    % Test on the 30% which the model hasn't seen to estimate performance.
+    % Show cross validation results
+
+\subsection{Baseline}
+    In the task-webpage \cite{irony_detect_twitter}, the suggested baseline indicated was a char or word gram model, followed by the SVM. We followed this recommendation to create our own baseline, by using the \emph{CountVectorizer} class and the SVM as implemented by SKLearn. We experimented with different $n$, using cross-validation and found that a 4-char model worked best. This will be used in our results as the baseline for this task.
+
+\subsection{Experiments}
+    For all our classifiers and different features we followed the methodology of creating a $70-30$ split of the training data, where $70\%$ of the data was used for training/cross-validation and the last $30\%$ were used to test the classifiers. 
+    
+    To select different features, we would start by using them in isolation with the different classifiers and see the results on the cross-validation. If the accuracy was $>70\%$ then the features would be considered to be concatenated to the final feature vector.
+    The features that weren't included often meant that the models would perform worse if they were added. 
+    
+    We also considered different dimensional reduction methods, namely \verb'PCA' and \verb'SparsePCA' for the TF-IDF vectors due to their large dimensions. It is also desirable that the final vector is somewhat interpretable, so we only applied these to the TF-IDF vectors, by far the largest dimensional features in our model. \verb'PCA' was cheaper and the results were comparable to \verb'SparsePCA' so this was used as our reduction method.
+    
+    We found the best performing \verb'PCA' dimensions for each of feature by performing a grid-search with cross-validation on the training data and the values found were $\text{emoji-PCA}_n = 4$, $\text{profanity-PCA}_n = 14$, $\text{word-PCA}_n = 20$. These results make intuitive sense, where the dimensions increase in terms of complexity of the features and their importance for the final classification. 
+    
+    In terms of classifiers, we used 4 different methods: \textbf{random forest} (\verb'RandomForestClassifier'), \textbf{support vector machines (SVM)} (\verb'svm.SVC(gamma="auto")'), \textbf{logistic regression} (\verb'LogisticRegression') and \textbf{nearest neighbour (NN)} (\verb'KNeighborsClassifier') for our task. All classifiers with the exception of Random Forests are sensitive to highly different scaled values, so we normalize all features using the \verb'StandardScaler', which subtracts the mean and divides by standard deviation, from \verb'SKLearn'. When doing cross-validation, we always reported the values for each of these classifiers and we could see that each feature tended to impact them in different ways.
+    
+    The \emph{RandomForestClassifier} is the best performing across all metrics and features. For this reason, we attempted to do parameter tuning for this particular model. We did this by using grid-search, but found no parameters which performed better than those provided by SKLearn, so the parameters were left unchanged.
+    
+    We present results for both the Cross-Validation and Test splits. For test, we chose the models which performed the best in the Cross-Validation. The final model we use is displayed in fig. \ref{fig:model_representation}. We also report the performance of our best classifier (Random Forests) on the task test set.
+    
